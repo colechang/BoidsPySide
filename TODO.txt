@@ -1,0 +1,12 @@
+• Add sliders to adjust Boids Behavior
+    • amount of particles
+    • Seperation of particles
+    • Colour
+    • Size
+    • Coherence
+    • Alignment
+    • Seperation
+• Quadtree Implementation to increase speed
+• Spatial Hashing
+• Button to Reset Boids
+    after change in sliders

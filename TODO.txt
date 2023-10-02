@@ -1,12 +1,15 @@
 • Add sliders to adjust Boids Behavior
     • amount of particles
-    • Seperation of particles
-    • Colour
     • Size
     • Coherence
+        Every bird attempts to move towards the average position of other nearby birds.
     • Alignment
+        Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
     • Seperation
-• Quadtree Implementation to increase speed
+         Each bird attempts to maintain a reasonable amount of distance 
+         between itself and any nearby birds, to prevent overcrowding.
+• For now the the boids will be put in a list
+• Quadtree Implementation to increase speed and memory
 • Spatial Hashing
 • Button to Reset Boids
     after change in sliders

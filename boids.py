@@ -3,6 +3,7 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
+import math
 
 # Define the parameters for the boids simulation
 NUM_BOIDS = 50
@@ -17,22 +18,24 @@ class Boid:
         self.y = y
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)
+        self.angle = random.uniform(0.0, 2.0 * math.pi)
 
     def update(self):
         # Update the boid's position
         self.x += self.dx
         self.y += self.dy
 
-        # Wrap around the screen
+        # change to collide with screen boundaries
+        # FIXED: changed direction instead of location
         if self.x < 0:
-            self.x = window_width
+            self.dx = -self.dx
         elif self.x > window_width:
-            self.x = 0
+            self.dx = -self.dx
 
         if self.y < 0:
-            self.y = window_height
+            self.dy = -self.dy
         elif self.y > window_height:
-            self.y = 0
+            self.dy = -self.dy
 
 
 class BoidsWidget(QWidget):
@@ -76,7 +79,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window_width = 800
-    window_height = 600
+    window_height = 800
 
     window = BoidsWindow()
     window.show()

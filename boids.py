@@ -9,7 +9,7 @@ import math
 NUM_BOIDS = 50
 BOID_SIZE = 10
 BOID_SPEED = 5
-BOID_COLOR = QColor(0, 0, 255)  # Blue color
+BOID_COLOR = QColor(250, 249, 246)
 
 # Class for an individual boid
 
@@ -18,10 +18,18 @@ class Boid:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)
-        self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)
+        self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
+        self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
         self.angle = random.uniform(0.0, 2.0 * math.pi)
         self.viewingAngle = 4.71239  # 270 Degrees
+
+    def seperation(self):
+        close_dx = 0
+        close_dy = 0
+        close_dx += self.x - otherboid.x
+        close_dy += self.y - otherboid.y
+        self.vx += close_dx * avoidfactor
+        self.vy += close_dy * avoidfactor
 
     def update(self):
         # Update the boid's position
@@ -39,7 +47,6 @@ class Boid:
             self.dy = -self.dy
         elif self.y > window_height:
             self.dy = -self.dy
-
 # Creates all boids and update boids to each other
 
 
@@ -74,7 +81,7 @@ class BoidsWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Boids Simulation")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 800, 800)
 
         central_widget = BoidsWidget()
         self.setCentralWidget(central_widget)

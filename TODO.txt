@@ -13,3 +13,7 @@
 • Spatial Hashing
 • Button to Reset Boids
     after change in sliders
+
+• Add shading
+    would have to make boids 3d and cast shadows off boids
+    https://www.youtube.com/watch?v=V4f_1_r80RY

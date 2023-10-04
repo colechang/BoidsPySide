@@ -23,13 +23,38 @@ class Boid:
         self.angle = random.uniform(0.0, 2.0 * math.pi)
         self.viewingAngle = 4.71239  # 270 Degrees
 
-    def seperation(self):
+    # avoid factor will be tunable
+    def seperation(boid):
         close_dx = 0
         close_dy = 0
-        close_dx += self.x - otherboid.x
-        close_dy += self.y - otherboid.y
-        self.vx += close_dx * avoidfactor
-        self.vy += close_dy * avoidfactor
+        close_dx += boid.x - otherboid.x
+        close_dy += boid.y - otherboid.y
+        boid.vx += close_dx * avoidfactor
+        boid.vy += close_dy * avoidfactor
+
+    # matching factor will be tunable
+    def alignment(boid):
+        xvel_avg, yvel_avg, neighboring_boids = 0
+        xvel_avg += otherboid.vx
+        yvel_avg += otherboid.vy
+        neighboring_boids += 1
+        if (neighboring_boids > 0):
+            xvel_avg = xvel_avg/neighboring_boids
+            yvel_avg = yvel_avg/neighboring_boids
+        boid.dx += (xvel_avg - boid.dx)*matchingfactor
+        boid.dy += (yvel_avg - boid.dy)*matchingfactor
+
+    # centering factor will be tunable
+    def cohesion(boid):
+        xpos_avg, ypos_avg, neighboring_boids = 0
+        xpos_avg += otherboid.x
+        ypos_avg += otherboid.y
+        neighboring_boids += 1
+        if (neighboring_boids > 0):
+            xpos_avg = xpos_avg/neighboring_boids
+            ypos_avg = ypos_avg/neighboring_boids
+        boid.dx += (xpos_avg - boid.x)*centeringfactor
+        boid.dy += (ypos_avg - boid.y)*centeringfactor
 
     def update(self):
         # Update the boid's position
@@ -47,15 +72,15 @@ class Boid:
             self.dy = -self.dy
         elif self.y > window_height:
             self.dy = -self.dy
+
+
 # Creates all boids and update boids to each other
-
-
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
 
         self.boids = [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height)) for _ in range(NUM_BOIDS)]
+            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
@@ -68,11 +93,12 @@ class BoidsWidget(QWidget):
 
         for boid in self.boids:
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
+# for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
+# quadtree will reduce this
 
     def update_boids(self):
         for boid in self.boids:
             boid.update()
-
         self.update()
 
 

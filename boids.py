@@ -10,10 +10,14 @@ NUM_BOIDS = 50
 BOID_SIZE = 10
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 249, 246)
+#Variables PySide will control 0.0-1.0
+AVOID_FACTOR = 0.5
+MATCHING_FACTOR = 0.5
+CENTERING_FACTOR = 0.5
 
 # Class for an individual boid
 
-
+# right now comparing every boid to every boid n*n Time complexity
 class Boid:
     def __init__(self, x, y):
         self.x = x
@@ -21,45 +25,47 @@ class Boid:
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
         self.angle = random.uniform(0.0, 2.0 * math.pi)
-        self.viewingAngle = 4.71239  # 270 Degrees
-
+    
     # avoid factor will be tunable
-    def seperation(boid):
-        close_dx = 0
-        close_dy = 0
-        close_dx += boid.x - otherboid.x
-        close_dy += boid.y - otherboid.y
-        boid.vx += close_dx * avoidfactor
-        boid.vy += close_dy * avoidfactor
+    def seperation(self,otherboid):
+        close_dx = close_dy = 0
+        close_dx += self.x - otherboid.x
+        close_dy += self.y - otherboid.y
+        self.dx += close_dx * AVOID_FACTOR
+        self.dy += close_dy * AVOID_FACTOR
 
     # matching factor will be tunable
-    def alignment(boid):
-        xvel_avg, yvel_avg, neighboring_boids = 0
-        xvel_avg += otherboid.vx
-        yvel_avg += otherboid.vy
+    def alignment(self,otherboid):
+        xvel_avg = yvel_avg = neighboring_boids = 0
+        xvel_avg += otherboid.dx
+        yvel_avg += otherboid.dy
         neighboring_boids += 1
         if (neighboring_boids > 0):
             xvel_avg = xvel_avg/neighboring_boids
             yvel_avg = yvel_avg/neighboring_boids
-        boid.dx += (xvel_avg - boid.dx)*matchingfactor
-        boid.dy += (yvel_avg - boid.dy)*matchingfactor
+        self.dx += (xvel_avg - self.dx)*MATCHING_FACTOR
+        self.dy += (yvel_avg - self.dy)*MATCHING_FACTOR
 
     # centering factor will be tunable
-    def cohesion(boid):
-        xpos_avg, ypos_avg, neighboring_boids = 0
+    def cohesion(self,otherboid):
+        xpos_avg = ypos_avg = neighboring_boids = 0
         xpos_avg += otherboid.x
         ypos_avg += otherboid.y
         neighboring_boids += 1
         if (neighboring_boids > 0):
             xpos_avg = xpos_avg/neighboring_boids
             ypos_avg = ypos_avg/neighboring_boids
-        boid.dx += (xpos_avg - boid.x)*centeringfactor
-        boid.dy += (ypos_avg - boid.y)*centeringfactor
+        self.dx += (xpos_avg - self.x)*CENTERING_FACTOR
+        self.dy += (ypos_avg - self.y)*CENTERING_FACTOR
 
-    def update(self):
+    def update(self,otherBoid):
         # Update the boid's position
         self.x += self.dx
         self.y += self.dy
+
+        self.seperation(otherBoid)
+        self.alignment(otherBoid)
+        self.cohesion(otherBoid)
 
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
@@ -80,7 +86,7 @@ class BoidsWidget(QWidget):
         super().__init__()
 
         self.boids = [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids
+            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
@@ -98,7 +104,8 @@ class BoidsWidget(QWidget):
 
     def update_boids(self):
         for boid in self.boids:
-            boid.update()
+            for otherBoid in self.boids:
+                boid.update(otherBoid)
         self.update()
 
 

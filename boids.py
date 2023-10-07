@@ -5,6 +5,7 @@ from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 import math
 
+
 # Define the parameters for the boids simulation
 NUM_BOIDS = 50
 BOID_SIZE = 10
@@ -14,6 +15,11 @@ BOID_COLOR = QColor(250, 249, 246)
 AVOID_FACTOR = 0.5
 MATCHING_FACTOR = 0.5
 CENTERING_FACTOR = 0.5
+TURN_FACTOR = 0.2
+MAX_SPEED = 6
+MIN_SPEED = 3
+VIEWING_DISTANCE = 40
+PROTECTED_RANGE = 5
 
 # Class for an individual boid
 
@@ -24,45 +30,49 @@ class Boid:
         self.y = y
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
-        self.angle = random.uniform(0.0, 2.0 * math.pi)
-    
+        self.neighboring_boids=0
+        self.close_dx=0
+        self.close_dy=0
+        self.xvel_avg = 0
+        self.yvel_avg=0
+        self.xpos_avg=0
+        self.ypos_avg=0
+
     # avoid factor will be tunable
     def seperation(self,otherboid):
-        close_dx = close_dy = 0
-        close_dx += self.x - otherboid.x
-        close_dy += self.y - otherboid.y
-        self.dx += close_dx * AVOID_FACTOR
-        self.dy += close_dy * AVOID_FACTOR
+        self.close_dx = self.close_dy = 0
+        self.close_dx += self.x - otherboid.x
+        self.close_dy += self.y - otherboid.y
+        self.dx += self.close_dx * AVOID_FACTOR
+        self.dy += self.close_dy * AVOID_FACTOR
 
     # matching factor will be tunable
     def alignment(self,otherboid):
-        xvel_avg = yvel_avg = neighboring_boids = 0
-        xvel_avg += otherboid.dx
-        yvel_avg += otherboid.dy
-        neighboring_boids += 1
-        if (neighboring_boids > 0):
-            xvel_avg = xvel_avg/neighboring_boids
-            yvel_avg = yvel_avg/neighboring_boids
-        self.dx += (xvel_avg - self.dx)*MATCHING_FACTOR
-        self.dy += (yvel_avg - self.dy)*MATCHING_FACTOR
+        self.xvel_avg = self.yvel_avg = 0
+        self.xvel_avg += otherboid.dx
+        self.yvel_avg += otherboid.dy
+        self.neighboring_boids += 1
+        if (self.neighboring_boids > 0):
+            self.xvel_avg = self.xvel_avg/self.neighboring_boids
+            self.yvel_avg = self.yvel_avg/self.neighboring_boids
+        self.dx += (self.xvel_avg - self.dx)*MATCHING_FACTOR
+        self.dy += (self.yvel_avg - self.dy)*MATCHING_FACTOR
 
     # centering factor will be tunable
     def cohesion(self,otherboid):
-        xpos_avg = ypos_avg = neighboring_boids = 0
-        xpos_avg += otherboid.x
-        ypos_avg += otherboid.y
-        neighboring_boids += 1
-        if (neighboring_boids > 0):
-            xpos_avg = xpos_avg/neighboring_boids
-            ypos_avg = ypos_avg/neighboring_boids
-        self.dx += (xpos_avg - self.x)*CENTERING_FACTOR
-        self.dy += (ypos_avg - self.y)*CENTERING_FACTOR
+        self.xpos_avg = self.ypos_avg = 0
+        self.xpos_avg += otherboid.x
+        self.ypos_avg += otherboid.y
+        self.neighboring_boids += 1
+        if (self.neighboring_boids > 0):
+            self.xpos_avg = self.xpos_avg/self.neighboring_boids
+            self.ypos_avg = self.ypos_avg/self.neighboring_boids
+        self.dx += (self.xpos_avg - self.x)*CENTERING_FACTOR
+        self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
 
     def update(self,otherBoid):
-        # Update the boid's position
-        self.x += self.dx
-        self.y += self.dy
 
+        # Update the boid's position
         self.seperation(otherBoid)
         self.alignment(otherBoid)
         self.cohesion(otherBoid)
@@ -70,14 +80,23 @@ class Boid:
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
         if self.x < 0:
-            self.dx = -self.dx
-        elif self.x > window_width:
-            self.dx = -self.dx
-
+            self.dx = self.dx + TURN_FACTOR
+        if self.x > window_width:
+            self.dx = self.dx - TURN_FACTOR
         if self.y < 0:
-            self.dy = -self.dy
+            self.dy = self.dy - TURN_FACTOR
         elif self.y > window_height:
-            self.dy = -self.dy
+            self.dy = self.dy + TURN_FACTOR
+
+        speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
+        if speed < MIN_SPEED:
+            self.dx = (self.dx/speed)*MIN_SPEED
+            self.dy = (self.dy/speed)*MIN_SPEED
+        if speed > MIN_SPEED:
+            self.dx = (self.dx/speed)*MAX_SPEED
+            self.dy = (self.dy/speed)*MAX_SPEED
+        self.x += self.dx
+        self.y += self.dy
 
 
 # Creates all boids and update boids to each other
@@ -105,7 +124,14 @@ class BoidsWidget(QWidget):
     def update_boids(self):
         for boid in self.boids:
             for otherBoid in self.boids:
-                boid.update(otherBoid)
+                if(boid!=otherBoid):
+                    dx = boid.x - otherBoid.x
+                    dy = boid.y - otherBoid.y
+                    if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
+                        squaredDistance = dx*dx + dy*dy
+                        if(squaredDistance<PROTECTED_RANGE):
+                            boid.update(otherBoid)
+
         self.update()
 
 

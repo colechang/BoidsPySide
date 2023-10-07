@@ -18,3 +18,4 @@
     would have to make boids 3d and cast shadows off boids
     https://www.youtube.com/watch?v=V4f_1_r80RY
 • Add Requirements.txt file for other machines
+• Add biases to boids

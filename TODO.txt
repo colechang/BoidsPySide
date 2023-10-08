@@ -19,3 +19,4 @@
     https://www.youtube.com/watch?v=V4f_1_r80RY
 • Add Requirements.txt file for other machines
 • Add biases to boids
+• Segment code in update_boids function into seperate functions 

@@ -30,22 +30,16 @@ class Boid:
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
         self.neighboring_boids = 0
-        self.close_dx = self.close_dy = 0
-        self.xvel_avg = self.yvel_avg = 0
-        self.xpos_avg = self.ypos_avg = 0
+        self.close_dx = self.close_dy = 0.0
+        self.xvel_avg = self.yvel_avg = 0.0
+        self.xpos_avg = self.ypos_avg = 0.0
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
     def separation(self,otherboid):
-        self.close_dx = self.close_dy = 0
-        self.close_dx += self.x - otherboid.x
-        self.close_dy += self.y - otherboid.y
         self.dx += self.close_dx * AVOID_FACTOR
         self.dy += self.close_dy * AVOID_FACTOR
     #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
     def alignment(self,otherboid):
-        self.xvel_avg = self.yvel_avg = 0
-        self.xvel_avg += otherboid.dx
-        self.yvel_avg += otherboid.dy
-        self.neighboring_boids += 1
+        
         if (self.neighboring_boids > 0):
             self.xvel_avg = self.xvel_avg/self.neighboring_boids
             self.yvel_avg = self.yvel_avg/self.neighboring_boids
@@ -54,10 +48,6 @@ class Boid:
     
     #Every bird attempts to move towards the average position of other nearby birds.
     def cohesion(self,otherboid):
-        self.xpos_avg = self.ypos_avg = 0
-        self.xpos_avg += otherboid.x
-        self.ypos_avg += otherboid.y
-        self.neighboring_boids += 1
         if (self.neighboring_boids > 0):
             self.xpos_avg = self.xpos_avg/self.neighboring_boids
             self.ypos_avg = self.ypos_avg/self.neighboring_boids
@@ -65,12 +55,6 @@ class Boid:
         self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
 
     def update(self,otherBoid):
-
-        # # Update the boid's position
-        # self.separation(otherBoid)
-        # self.alignment(otherBoid)
-        # self.cohesion(otherBoid)
-
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
         if self.x < 0:
@@ -114,7 +98,7 @@ class BoidsWidget(QWidget):
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
 # for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
 # quadtree will reduce this
-
+#such ugly nested for loops will segment code into functions after
     def update_boids(self):
         for boid in self.boids:
             for otherBoid in self.boids:
@@ -124,13 +108,14 @@ class BoidsWidget(QWidget):
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
                         squaredDistance = dx*dx + dy*dy
                         if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
-                            boid.separation(otherBoid)
+                            boid.close_dx += boid.x - otherBoid.x
+                            boid.close_dy += boid.y - otherBoid.y
                         elif (squaredDistance < (VIEWING_DISTANCE*VIEWING_DISTANCE)):
-                            self.xpos_avg += otherBoid.x 
-                            self.ypos_avg += otherBoid.y 
-                            self.xvel_avg += otherBoid.dx
-                            self.yvel_avg += otherBoid.dy
-                            self.neighboring_boids += 1
+                            boid.xvel_avg += otherBoid.dx
+                            boid.yvel_avg += otherBoid.dy
+                            boid.xpos_avg += otherBoid.x
+                            boid.ypos_avg += otherBoid.y
+                            boid.neighboring_boids += 1
         self.update()
 
 class BoidsWindow(QMainWindow):

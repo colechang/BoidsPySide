@@ -19,4 +19,9 @@
     https://www.youtube.com/watch?v=V4f_1_r80RY
 • Add Requirements.txt file for other machines
 • Add biases to boids
-• Segment code in update_boids function into seperate functions 
+• Segment code in update_boids function into seperate functions
+
+UPDATE
+    Boids have movement and independent logic
+    But they all end up in the corner
+    

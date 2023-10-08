@@ -34,12 +34,11 @@ class Boid:
         self.xvel_avg = self.yvel_avg = 0.0
         self.xpos_avg = self.ypos_avg = 0.0
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
-    def separation(self,otherboid):
+    def separation(self):
         self.dx += self.close_dx * AVOID_FACTOR
         self.dy += self.close_dy * AVOID_FACTOR
     #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
-    def alignment(self,otherboid):
-        
+    def alignment(self):
         if (self.neighboring_boids > 0):
             self.xvel_avg = self.xvel_avg/self.neighboring_boids
             self.yvel_avg = self.yvel_avg/self.neighboring_boids
@@ -47,14 +46,14 @@ class Boid:
         self.dy += (self.yvel_avg - self.dy)*MATCHING_FACTOR
     
     #Every bird attempts to move towards the average position of other nearby birds.
-    def cohesion(self,otherboid):
+    def cohesion(self):
         if (self.neighboring_boids > 0):
             self.xpos_avg = self.xpos_avg/self.neighboring_boids
             self.ypos_avg = self.ypos_avg/self.neighboring_boids
         self.dx += (self.xpos_avg - self.x)*CENTERING_FACTOR
         self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
 
-    def update(self,otherBoid):
+    def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
         if self.x < 0:
@@ -81,7 +80,6 @@ class Boid:
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
-
         self.boids = [Boid(random.uniform(0, window_width), random.uniform(
             0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
 
@@ -116,6 +114,11 @@ class BoidsWidget(QWidget):
                             boid.xpos_avg += otherBoid.x
                             boid.ypos_avg += otherBoid.y
                             boid.neighboring_boids += 1
+            if(boid.neighboring_boids>0):
+                boid.alignment()
+                boid.cohesion()
+            boid.separation()
+            boid.update()
         self.update()
 
 class BoidsWindow(QMainWindow):

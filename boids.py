@@ -30,12 +30,9 @@ class Boid:
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
         self.neighboring_boids = 0
-        self.close_dx = 0
-        self.close_dy = 0
-        self.xvel_avg = 0
-        self.yvel_avg = 0
-        self.xpos_avg = 0
-        self.ypos_avg = 0
+        self.close_dx = self.close_dy = 0
+        self.xvel_avg = self.yvel_avg = 0
+        self.xpos_avg = self.ypos_avg = 0
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
     def separation(self,otherboid):
         self.close_dx = self.close_dy = 0

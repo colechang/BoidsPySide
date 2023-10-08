@@ -11,7 +11,7 @@ NUM_BOIDS = 50
 BOID_SIZE = 10
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 249, 246)
-#Variables PySide will control 0.0-1.0
+#Variables PySide will control 0.0-1.0 Tunable
 AVOID_FACTOR = 0.5
 MATCHING_FACTOR = 0.5
 CENTERING_FACTOR = 0.5
@@ -22,7 +22,6 @@ VIEWING_DISTANCE = 40
 PROTECTED_RANGE = 5
 
 # Class for an individual boid
-
 # right now comparing every boid to every boid n*n Time complexity
 class Boid:
     def __init__(self, x, y):
@@ -30,23 +29,21 @@ class Boid:
         self.y = y
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
-        self.neighboring_boids=0
-        self.close_dx=0
-        self.close_dy=0
+        self.neighboring_boids = 0
+        self.close_dx = 0
+        self.close_dy = 0
         self.xvel_avg = 0
-        self.yvel_avg=0
-        self.xpos_avg=0
-        self.ypos_avg=0
-
-    # avoid factor will be tunable
-    def seperation(self,otherboid):
+        self.yvel_avg = 0
+        self.xpos_avg = 0
+        self.ypos_avg = 0
+    #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
+    def separation(self,otherboid):
         self.close_dx = self.close_dy = 0
         self.close_dx += self.x - otherboid.x
         self.close_dy += self.y - otherboid.y
         self.dx += self.close_dx * AVOID_FACTOR
         self.dy += self.close_dy * AVOID_FACTOR
-
-    # matching factor will be tunable
+    #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
     def alignment(self,otherboid):
         self.xvel_avg = self.yvel_avg = 0
         self.xvel_avg += otherboid.dx
@@ -57,8 +54,8 @@ class Boid:
             self.yvel_avg = self.yvel_avg/self.neighboring_boids
         self.dx += (self.xvel_avg - self.dx)*MATCHING_FACTOR
         self.dy += (self.yvel_avg - self.dy)*MATCHING_FACTOR
-
-    # centering factor will be tunable
+    
+    #Every bird attempts to move towards the average position of other nearby birds.
     def cohesion(self,otherboid):
         self.xpos_avg = self.ypos_avg = 0
         self.xpos_avg += otherboid.x
@@ -72,10 +69,10 @@ class Boid:
 
     def update(self,otherBoid):
 
-        # Update the boid's position
-        self.seperation(otherBoid)
-        self.alignment(otherBoid)
-        self.cohesion(otherBoid)
+        # # Update the boid's position
+        # self.separation(otherBoid)
+        # self.alignment(otherBoid)
+        # self.cohesion(otherBoid)
 
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
@@ -129,11 +126,15 @@ class BoidsWidget(QWidget):
                     dy = boid.y - otherBoid.y
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
                         squaredDistance = dx*dx + dy*dy
-                        if(squaredDistance<PROTECTED_RANGE):
-                            boid.update(otherBoid)
-
+                        if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
+                            boid.separation(otherBoid)
+                        elif (squaredDistance < (VIEWING_DISTANCE*VIEWING_DISTANCE)):
+                            self.xpos_avg += otherBoid.x 
+                            self.ypos_avg += otherBoid.y 
+                            self.xvel_avg += otherBoid.dx
+                            self.yvel_avg += otherBoid.dy
+                            self.neighboring_boids += 1
         self.update()
-
 
 class BoidsWindow(QMainWindow):
     def __init__(self):

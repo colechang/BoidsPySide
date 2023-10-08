@@ -56,14 +56,14 @@ class Boid:
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 0:
+        if self.x < 100:
             self.dx = self.dx + TURN_FACTOR
-        if self.x > window_width:
+        if self.x > window_width-100:
             self.dx = self.dx - TURN_FACTOR
-        if self.y < 0:
-            self.dy = self.dy - TURN_FACTOR
-        elif self.y > window_height:
+        if self.y < 100:
             self.dy = self.dy + TURN_FACTOR
+        elif self.y > window_height-100:
+            self.dy = self.dy - TURN_FACTOR
 
         speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
         if speed < MIN_SPEED:
@@ -96,7 +96,7 @@ class BoidsWidget(QWidget):
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
 # for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
 # quadtree will reduce this
-#such ugly nested for loops will segment code into functions after
+#such ugly nested code! will segment code into functions after
     def update_boids(self):
         for boid in self.boids:
             for otherBoid in self.boids:

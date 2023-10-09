@@ -5,21 +5,20 @@ from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 import math
 
-
 # Define the parameters for the boids simulation
-NUM_BOIDS = 50
-BOID_SIZE = 10
+NUM_BOIDS = 100
+BOID_SIZE = 5
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 249, 246)
 #Variables PySide will control 0.0-1.0 Tunable
-AVOID_FACTOR = 0.5
-MATCHING_FACTOR = 0.5
-CENTERING_FACTOR = 0.5
+AVOID_FACTOR = 0.05
+MATCHING_FACTOR = 0.01
+CENTERING_FACTOR = 0.005
 TURN_FACTOR = 0.2
 MAX_SPEED = 6
 MIN_SPEED = 3
-VIEWING_DISTANCE = 40
-PROTECTED_RANGE = 5
+VIEWING_DISTANCE = 20
+PROTECTED_RANGE = 4
 
 # Class for an individual boid
 # right now comparing every boid to every boid n*n Time complexity
@@ -60,20 +59,20 @@ class Boid:
             self.dx = self.dx + TURN_FACTOR
         if self.x > window_width-100:
             self.dx = self.dx - TURN_FACTOR
-        if self.y < 100:
+        if self.y < 50:
             self.dy = self.dy + TURN_FACTOR
-        elif self.y > window_height-100:
+        elif self.y > window_height-50:
             self.dy = self.dy - TURN_FACTOR
 
         speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
         if speed < MIN_SPEED:
             self.dx = (self.dx/speed)*MIN_SPEED
             self.dy = (self.dy/speed)*MIN_SPEED
-        if speed > MIN_SPEED:
+        if speed > MAX_SPEED:
             self.dx = (self.dx/speed)*MAX_SPEED
             self.dy = (self.dy/speed)*MAX_SPEED
-        self.x += self.dx
-        self.y += self.dy
+        self.x = self.x + self.dx
+        self.y = self.y + self.dy
 
 
 # Creates all boids and update boids to each other
@@ -124,9 +123,10 @@ class BoidsWidget(QWidget):
 class BoidsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        # 2560 × 1600
+        # 1400 × 1050 
         self.setWindowTitle("Boids Simulation")
-        self.setGeometry(100, 100, 800, 800)
+        self.setGeometry(100, 100, 800, 600)
 
         central_widget = BoidsWidget()
         self.setCentralWidget(central_widget)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window_width = 800
-    window_height = 800
+    window_height = 600
 
     window = BoidsWindow()
     window.show()

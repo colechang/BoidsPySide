@@ -20,8 +20,9 @@
 • Add Requirements.txt file for other machines
 • Add biases to boids
 • Segment code in update_boids function into seperate functions
+• Instead of using sqrt function as it is slow, I can use the "alpha max plus beta min" approximation
 
 UPDATE
     Boids have movement and independent logic
     But they all end up in the corner
-    
+

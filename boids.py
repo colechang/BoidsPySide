@@ -6,32 +6,37 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 100
-BOID_SIZE = 5
+NUM_BOIDS = 200
+BOID_SIZE = 3
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 249, 246)
 #Variables PySide will control 0.0-1.0 Tunable
 AVOID_FACTOR = 0.05
 MATCHING_FACTOR = 0.01
 CENTERING_FACTOR = 0.005
-TURN_FACTOR = 0.2
-MAX_SPEED = 6
-MIN_SPEED = 3
-VIEWING_DISTANCE = 20
+TURN_FACTOR = 0.8
+MAX_SPEED = 5
+MIN_SPEED = 1
+VIEWING_DISTANCE = 15
 PROTECTED_RANGE = 4
+MAXBIAS = 0.01
+BIAS_INCREMENT = 0.000004
+BIAS_GROUPS = ["LEFT","RIGHT"]
 
 # Class for an individual boid
 # right now comparing every boid to every boid n*n Time complexity
 class Boid:
-    def __init__(self, x, y):
+    def __init__(self, x, y,group):
         self.x = x
         self.y = y
+        self.biasGroup = group
         self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
         self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
         self.neighboring_boids = 0
         self.close_dx = self.close_dy = 0.0
         self.xvel_avg = self.yvel_avg = 0.0
         self.xpos_avg = self.ypos_avg = 0.0
+        self.biasval = 0.001
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
     def separation(self):
         self.dx += self.close_dx * AVOID_FACTOR
@@ -64,6 +69,27 @@ class Boid:
         elif self.y > window_height-50:
             self.dy = self.dy - TURN_FACTOR
 
+        if (self.biasGroup =="LEFT"): 
+            if (self.dx > 0):
+                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+            else:
+                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+
+        elif (self.biasGroup == "RIGHT"): # biased to left of screen
+            if (self.dx < 0):
+                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+            else:
+                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+
+    # If the boid has a bias, bias it!
+    # biased to right of screen
+        if (self.biasGroup =="LEFT"):
+            self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
+    # biased to left of screen
+        elif (self.biasGroup=="RIGHT"):
+            self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
+
+
         speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
         if speed < MIN_SPEED:
             self.dx = (self.dx/speed)*MIN_SPEED
@@ -80,13 +106,13 @@ class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.boids = [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
+            0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
         self.timer.start(10)  # Update every 20 milliseconds
 
-    def paintEvent(self, event):
+    def paintEvent(self,event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setBrush(QBrush(BOID_COLOR))

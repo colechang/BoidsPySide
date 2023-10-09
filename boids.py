@@ -11,14 +11,14 @@ BOID_SIZE = 3
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 249, 246)
 #Variables PySide will control 0.0-1.0 Tunable
-AVOID_FACTOR = 0.05
-MATCHING_FACTOR = 0.01
-CENTERING_FACTOR = 0.005
-TURN_FACTOR = 0.8
-MAX_SPEED = 5
+AVOID_FACTOR = 0.001   # Increase to encourage more avoidance
+MATCHING_FACTOR = 0.05   # Increase to encourage more alignment
+CENTERING_FACTOR = 0.01   # Increase to encourage more cohesion
+TURN_FACTOR = 0.1   # Reduce to make turns less aggressive
+MAX_SPEED = 4   # Reduce to limit maximum speed
 MIN_SPEED = 1
-VIEWING_DISTANCE = 15
-PROTECTED_RANGE = 4
+VIEWING_DISTANCE = 6  # Adjust to control the neighborhood size
+PROTECTED_RANGE = 10   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
 BIAS_INCREMENT = 0.000004
 BIAS_GROUPS = ["LEFT","RIGHT"]
@@ -69,6 +69,12 @@ class Boid:
         elif self.y > window_height-50:
             self.dy = self.dy - TURN_FACTOR
 
+        # angle = math.atan2(self.dy, self.dx)
+        # angle += random.uniform(-0.1, 0.1)  # Add a small random perturbation to the angle
+        # speed = math.sqrt(self.dx * self.dx + self.dy * self.dy)
+        # self.dx = speed * math.cos(angle)
+        # self.dy = speed * math.sin(angle)
+
         if (self.biasGroup =="LEFT"): 
             if (self.dx > 0):
                 self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
@@ -81,14 +87,12 @@ class Boid:
             else:
                 self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-    # If the boid has a bias, bias it!
     # biased to right of screen
-        if (self.biasGroup =="LEFT"):
+        if (self.biasGroup == "LEFT"):
             self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
     # biased to left of screen
-        elif (self.biasGroup=="RIGHT"):
+        elif (self.biasGroup== "RIGHT"):
             self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
-
 
         speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
         if speed < MIN_SPEED:
@@ -97,8 +101,8 @@ class Boid:
         if speed > MAX_SPEED:
             self.dx = (self.dx/speed)*MAX_SPEED
             self.dy = (self.dy/speed)*MAX_SPEED
-        self.x = self.x + self.dx
-        self.y = self.y + self.dy
+        self.x += self.dx
+        self.y += self.dy
 
 
 # Creates all boids and update boids to each other

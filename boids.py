@@ -7,21 +7,22 @@ import math
 
 # Define the parameters for the boids simulation
 NUM_BOIDS = 200
-BOID_SIZE = 3
+BOID_SIZE = 5.0
 BOID_SPEED = 5
-BOID_COLOR = QColor(250, 249, 246)
+BOID_COLOR = QColor(250, 240, 240)
 #Variables PySide will control 0.0-1.0 Tunable
-AVOID_FACTOR = 0.001   # Increase to encourage more avoidance
+AVOID_FACTOR = 0.05   # Increase to encourage more avoidance
 MATCHING_FACTOR = 0.05   # Increase to encourage more alignment
-CENTERING_FACTOR = 0.01   # Increase to encourage more cohesion
-TURN_FACTOR = 0.1   # Reduce to make turns less aggressive
-MAX_SPEED = 4   # Reduce to limit maximum speed
-MIN_SPEED = 1
-VIEWING_DISTANCE = 6  # Adjust to control the neighborhood size
-PROTECTED_RANGE = 10   # Increase to encourage more collision avoidance
+CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
+TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
+MAX_SPEED = 3.0   # Reduce to limit maximum speed
+MIN_SPEED = 1.0
+VIEWING_DISTANCE = 2.0  # Adjust to control the neighborhood size
+PROTECTED_RANGE = 2.0   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
 BIAS_INCREMENT = 0.000004
 BIAS_GROUPS = ["LEFT","RIGHT"]
+BIAS_VAL = 0.001
 
 # Class for an individual boid
 # right now comparing every boid to every boid n*n Time complexity
@@ -30,13 +31,14 @@ class Boid:
         self.x = x
         self.y = y
         self.biasGroup = group
-        self.dx = random.uniform(-BOID_SPEED, BOID_SPEED)  # x velocity
-        self.dy = random.uniform(-BOID_SPEED, BOID_SPEED)  # y velocity
+        self.dx = random.uniform(MIN_SPEED, MAX_SPEED)  # x velocity
+        self.dy = random.uniform(MIN_SPEED, MAX_SPEED)  # y velocity
         self.neighboring_boids = 0
         self.close_dx = self.close_dy = 0.0
         self.xvel_avg = self.yvel_avg = 0.0
         self.xpos_avg = self.ypos_avg = 0.0
-        self.biasval = 0.001
+        self.biasval = BIAS_VAL
+        self.hitCount = 0
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
     def separation(self):
         self.dx += self.close_dx * AVOID_FACTOR
@@ -60,21 +62,15 @@ class Boid:
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 100:
+        if self.x < 200:
             self.dx = self.dx + TURN_FACTOR
-        if self.x > window_width-100:
+        if self.x > window_width-200:
             self.dx = self.dx - TURN_FACTOR
-        if self.y < 50:
+        if self.y < 100:
             self.dy = self.dy + TURN_FACTOR
-        elif self.y > window_height-50:
+        if self.y > window_height-100:
             self.dy = self.dy - TURN_FACTOR
-
-        # angle = math.atan2(self.dy, self.dx)
-        # angle += random.uniform(-0.1, 0.1)  # Add a small random perturbation to the angle
-        # speed = math.sqrt(self.dx * self.dx + self.dy * self.dy)
-        # self.dx = speed * math.cos(angle)
-        # self.dy = speed * math.sin(angle)
-
+            
         if (self.biasGroup =="LEFT"): 
             if (self.dx > 0):
                 self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
@@ -94,7 +90,7 @@ class Boid:
         elif (self.biasGroup== "RIGHT"):
             self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
 
-        speed = math.sqrt(self.dx*self.dx + self.dy*self.dy)
+        speed = math.sqrt(abs(self.dx*self.dx + self.dy*self.dy))
         if speed < MIN_SPEED:
             self.dx = (self.dx/speed)*MIN_SPEED
             self.dy = (self.dy/speed)*MIN_SPEED
@@ -146,7 +142,7 @@ class BoidsWidget(QWidget):
             if(boid.neighboring_boids>0):
                 boid.alignment()
                 boid.cohesion()
-            boid.separation()
+                boid.separation()
             boid.update()
         self.update()
 
@@ -156,7 +152,7 @@ class BoidsWindow(QMainWindow):
         # 2560 × 1600
         # 1400 × 1050 
         self.setWindowTitle("Boids Simulation")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(0, 0, 400, 400)
 
         central_widget = BoidsWidget()
         self.setCentralWidget(central_widget)

@@ -2,7 +2,7 @@ import sys
 import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout, QWidget
 import math
 
 # Define the parameters for the boids simulation
@@ -38,7 +38,6 @@ class Boid:
         self.xvel_avg = self.yvel_avg = 0.0
         self.xpos_avg = self.ypos_avg = 0.0
         self.biasval = BIAS_VAL
-        self.hitCount = 0
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
     def separation(self):
         self.dx += self.close_dx * AVOID_FACTOR
@@ -149,15 +148,56 @@ class BoidsWidget(QWidget):
 class BoidsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        # 2560 × 1600
-        # 1400 × 1050 
         self.setWindowTitle("Boids Simulation")
-        self.setGeometry(0, 0, 400, 400)
+        self.setGeometry(0, 0, 800, 600)
 
-        central_widget = BoidsWidget()
+        # Create the central widget
+        central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
+        # Create a layout for the central widget
+        layout = QVBoxLayout()
 
+        # Create sliders and labels
+        slider_layout = QHBoxLayout()
+        
+        self.avoid_slider, avoid_label = self.create_slider("Avoid Factor", AVOID_FACTOR)
+        self.centering_slider, centering_label = self.create_slider("Centering Factor", CENTERING_FACTOR)
+        self.matching_slider, matching_label = self.create_slider("Matching Factor", MATCHING_FACTOR)
+
+        slider_layout.addWidget(avoid_label)
+        slider_layout.addWidget(self.avoid_slider)
+        slider_layout.addWidget(centering_label)
+        slider_layout.addWidget(self.centering_slider)
+        slider_layout.addWidget(matching_label)
+        slider_layout.addWidget(self.matching_slider)
+
+        layout.addLayout(slider_layout)
+
+        # Create the boids widget and add it to the central widget
+        boids_widget = BoidsWidget()
+        layout.addWidget(boids_widget)
+
+        central_widget.setLayout(layout)
+
+    def create_slider(self, label_text, initial_value):
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(1, 10)
+        slider.setValue(int(initial_value * 10))
+        slider.valueChanged.connect(self.slider_value_changed)
+
+        label = QLabel(label_text)
+
+        return slider, label
+
+    def slider_value_changed(self):
+        # Update the variables based on the slider values
+        global AVOID_FACTOR
+        global CENTERING_FACTOR
+        global MATCHING_FACTOR
+        AVOID_FACTOR = self.avoid_slider.slider.value() / 100.0
+        CENTERING_FACTOR = self.centering_slider.slider.value() / 100.0
+        MATCHING_FACTOR = self.matching_slider.slider.value() / 100.0
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 

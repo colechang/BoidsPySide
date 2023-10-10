@@ -162,7 +162,7 @@ class BoidsWindow(QMainWindow):
         slider_layout = QHBoxLayout()
         
         self.avoid_slider, avoid_label = self.create_slider("Avoid Factor", AVOID_FACTOR)
-        self.centering_slider, centering_label = self.create_slider("Centering Factor", CENTERING_FACTOR)
+        self.centering_slider, centering_label = self.create_sliderCentering("Centering Factor", CENTERING_FACTOR)
         self.matching_slider, matching_label = self.create_slider("Matching Factor", MATCHING_FACTOR)
 
         slider_layout.addWidget(avoid_label)
@@ -183,21 +183,32 @@ class BoidsWindow(QMainWindow):
     def create_slider(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
         slider.setRange(1, 10)
-        slider.setValue(int(initial_value * 10))
+        slider.setValue(int(initial_value * 100))
+        slider.valueChanged.connect(self.slider_value_changed)
+
+        label = QLabel(label_text)
+
+        return slider, label
+    def create_sliderCentering(self, label_text, initial_value):
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(1, 10)
+        slider.setValue(int(initial_value * 10000))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
 
         return slider, label
 
+
     def slider_value_changed(self):
         # Update the variables based on the slider values
         global AVOID_FACTOR
         global CENTERING_FACTOR
         global MATCHING_FACTOR
-        AVOID_FACTOR = self.avoid_slider.slider.value() / 100.0
-        CENTERING_FACTOR = self.centering_slider.slider.value() / 100.0
-        MATCHING_FACTOR = self.matching_slider.slider.value() / 100.0
+        AVOID_FACTOR = self.avoid_slider.value() / 100.0
+        CENTERING_FACTOR = self.centering_slider.value() / 100.0
+        MATCHING_FACTOR = self.matching_slider.value() / 10000.0
+        print(self.matching_slider.value())
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 

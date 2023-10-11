@@ -2,7 +2,7 @@ import sys
 import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout, QWidget, QPushButton
 import math
 
 # Define the parameters for the boids simulation
@@ -17,7 +17,7 @@ CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
 TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
 MAX_SPEED = 3.0   # Reduce to limit maximum speed
 MIN_SPEED = 1.0
-VIEWING_DISTANCE = 2.0  # Adjust to control the neighborhood size
+VIEWING_DISTANCE = 3.0  # Adjust to control the neighborhood size
 PROTECTED_RANGE = 2.0   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
 BIAS_INCREMENT = 0.000004
@@ -160,7 +160,7 @@ class BoidsWindow(QMainWindow):
 
         # Create sliders and labels
         slider_layout = QHBoxLayout()
-        
+
         self.avoid_slider, avoid_label = self.create_slider("Avoid Factor", AVOID_FACTOR)
         self.centering_slider, centering_label = self.create_sliderCentering("Centering Factor", CENTERING_FACTOR)
         self.matching_slider, matching_label = self.create_slider("Matching Factor", MATCHING_FACTOR)
@@ -174,10 +174,15 @@ class BoidsWindow(QMainWindow):
 
         layout.addLayout(slider_layout)
 
-        # Create the boids widget and add it to the central widget
-        boids_widget = BoidsWidget()
-        layout.addWidget(boids_widget)
+        # Create a container widget for the BoidsWidget
+        boids_container = QWidget()
+        boids_layout = QVBoxLayout()
+        self.boids_widget = BoidsWidget()
+        boids_layout.addWidget(self.boids_widget)
+        boids_container.setLayout(boids_layout)
 
+        # Add the layouts to the central widget
+        layout.addWidget(boids_container)
         central_widget.setLayout(layout)
 
     def create_slider(self, label_text, initial_value):
@@ -199,7 +204,6 @@ class BoidsWindow(QMainWindow):
 
         return slider, label
 
-
     def slider_value_changed(self):
         # Update the variables based on the slider values
         global AVOID_FACTOR
@@ -208,7 +212,7 @@ class BoidsWindow(QMainWindow):
         AVOID_FACTOR = self.avoid_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 100.0
         MATCHING_FACTOR = self.matching_slider.value() / 10000.0
-        print(self.matching_slider.value())
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 

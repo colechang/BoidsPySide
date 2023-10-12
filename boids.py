@@ -42,6 +42,8 @@ class Boid:
     def separation(self):
         self.dx += self.close_dx * AVOID_FACTOR
         self.dy += self.close_dy * AVOID_FACTOR
+        return self.dx,self.dy
+
     #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
     def alignment(self):
         if (self.neighboring_boids > 0):
@@ -49,6 +51,7 @@ class Boid:
             self.yvel_avg = self.yvel_avg/self.neighboring_boids
         self.dx += (self.xvel_avg - self.dx)*MATCHING_FACTOR
         self.dy += (self.yvel_avg - self.dy)*MATCHING_FACTOR
+        return self.dx,self.dy
     
     #Every bird attempts to move towards the average position of other nearby birds.
     def cohesion(self):
@@ -57,6 +60,8 @@ class Boid:
             self.ypos_avg = self.ypos_avg/self.neighboring_boids
         self.dx += (self.xpos_avg - self.x)*CENTERING_FACTOR
         self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
+        return self.dx,self.dy
+
 
     def update(self):
         # change to collide with screen boundaries
@@ -139,9 +144,11 @@ class BoidsWidget(QWidget):
                             boid.ypos_avg += otherBoid.y
                             boid.neighboring_boids += 1
             if(boid.neighboring_boids>0):
-                boid.alignment()
-                boid.cohesion()
-                boid.separation()
+                alignment = boid.alignment()
+                cohesion = boid.cohesion()
+                separation = boid.separation()
+                boid.dx = alignment[0] + cohesion[0] + separation [0]
+                boid.dy = alignment[0] + cohesion[0] + separation[0]
             boid.update()
         self.update()
 

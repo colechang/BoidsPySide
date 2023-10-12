@@ -148,7 +148,7 @@ class BoidsWidget(QWidget):
                 cohesion = boid.cohesion()
                 separation = boid.separation()
                 boid.dx = alignment[0] + cohesion[0] + separation [0]
-                boid.dy = alignment[0] + cohesion[0] + separation[0]
+                boid.dy = alignment[1] + cohesion[1] + separation[1]
             boid.update()
         self.update()
 

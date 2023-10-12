@@ -21,8 +21,9 @@
 • Add biases to boids
 • Segment code in update_boids function into seperate functions
 • Instead of using sqrt function as it is slow, I can use the "alpha max plus beta min" approximation
-
+• I think since their is no leader the boids dont have a purpose to fly elsewhere
 UPDATE
     Boids have movement and independent logic
     But they all end up in the corner
+    Need to fine tune Constants
 

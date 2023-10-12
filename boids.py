@@ -11,7 +11,7 @@ BOID_SIZE = 5.0
 BOID_SPEED = 5
 BOID_COLOR = QColor(250, 240, 240)
 #Variables PySide will control 0.0-1.0 Tunable
-AVOID_FACTOR = 0.005   # Increase to encourage more avoidance
+AVOID_FACTOR = 0.05   # Increase to encourage more avoidance
 MATCHING_FACTOR = 0.05   # Increase to encourage more alignment
 CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
 TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
@@ -197,7 +197,7 @@ class BoidsWindow(QMainWindow):
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
         slider.setRange(1, 10)
-        slider.setValue(int(initial_value * 1000))
+        slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -226,7 +226,7 @@ class BoidsWindow(QMainWindow):
         global AVOID_FACTOR
         global CENTERING_FACTOR
         global MATCHING_FACTOR
-        AVOID_FACTOR = self.avoid_slider.value() / 1000.0
+        AVOID_FACTOR = self.avoid_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 10000.0
         MATCHING_FACTOR = self.matching_slider.value() / 100.0
 

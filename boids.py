@@ -15,14 +15,14 @@ AVOID_FACTOR = 0.05   # Increase to encourage more avoidance
 MATCHING_FACTOR = 0.05   # Increase to encourage more alignment
 CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
 TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
-MAX_SPEED = 3.0   # Reduce to limit maximum speed
-MIN_SPEED = 1.0
-VIEWING_DISTANCE = 8.0  # Adjust to control the neighborhood size
+MAX_SPEED = 6.0   # Reduce to limit maximum speed
+MIN_SPEED = 3.0
+VIEWING_DISTANCE = 5.0  # Adjust to control the neighborhood size
 PROTECTED_RANGE = 2.0   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
 BIAS_INCREMENT = 0.000004
 BIAS_GROUPS = ["LEFT","RIGHT"]
-BIAS_VAL = 0.001
+BIAS_VAL = 0.009
 SCREEN_WIDTH = 0
 SCREEN_HEIGHT = 0
 
@@ -63,18 +63,21 @@ class Boid:
         self.dx += (self.xpos_avg - self.x)*CENTERING_FACTOR
         self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
         return self.dx,self.dy
-
+    
+    # def tend_to_place(self):
+    #     self.dx += -self.x/10000
+    #     self.dy += -self.y/10000
 
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 0:
+        if self.x < 200:
             self.dx = self.dx + TURN_FACTOR
-        if self.x > window_width:
+        if self.x > window_width-200:
             self.dx = self.dx - TURN_FACTOR
-        if self.y < 0:
+        if self.y < 200:
             self.dy = self.dy + TURN_FACTOR
-        if self.y > window_height:
+        if self.y > window_height-200:
             self.dy = self.dy - TURN_FACTOR
             
         if (self.biasGroup =="LEFT"): 
@@ -103,6 +106,7 @@ class Boid:
         if speed > MAX_SPEED:
             self.dx = (self.dx/speed)*MAX_SPEED
             self.dy = (self.dy/speed)*MAX_SPEED
+        #self.tend_to_place()
         self.x += self.dx
         self.y += self.dy
 
@@ -111,12 +115,11 @@ class Boid:
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.boids = [Boid(random.uniform(0, window_width), random.uniform(
+        self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"LEADER")] + [Boid(random.uniform(0, window_width), random.uniform(
             0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
-
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(10)  # Update every 20 milliseconds
+        self.timer.start(1)  # Update every 20 milliseconds
 
     def paintEvent(self,event):
         painter = QPainter(self)
@@ -124,36 +127,39 @@ class BoidsWidget(QWidget):
         painter.setBrush(QBrush(BOID_COLOR))
 
         for boid in self.boids:
-            if boid == self.boids[0]:
-                painter.setBrush(QBrush(QColor(255,0,0)))
-            else:
-                painter.setBrush(QBrush(BOID_COLOR))
+            # if boid == self.boids[0]:
+            #     painter.setBrush(QBrush(QColor(255,0,0)))
+            #     painter.drawEllipse(boid.x, boid.y, BOID_SIZE+3, BOID_SIZE+3)
+            # else:
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
+            
 
 # for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
 # quadtree will reduce this
 #such ugly nested code! will segment code into functions after
     def update_boids(self):
         for boid in self.boids:
+            xvel_avg = yvel_avg = xpos_avg = ypos_avg = neighboring_boids = 0
             for otherBoid in self.boids:
-                if(boid!=otherBoid):
+                if(boid!=otherBoid): #or boid.biasGroup=="LEADER"
                     dx = boid.x - otherBoid.x
                     dy = boid.y - otherBoid.y
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
                         squaredDistance = dx*dx + dy*dy
                         if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
+                            #boid.close_dx = boid.close_dx - boid.x - otherBoid.x
                             boid.close_dx += boid.x - otherBoid.x
                             boid.close_dy += boid.y - otherBoid.y
                         elif (squaredDistance < (VIEWING_DISTANCE*VIEWING_DISTANCE)):
-                            boid.xvel_avg += otherBoid.dx
-                            boid.yvel_avg += otherBoid.dy
-                            boid.xpos_avg += otherBoid.x
-                            boid.ypos_avg += otherBoid.y
-                            boid.neighboring_boids += 1
-            if(boid.neighboring_boids>0):
+                            xvel_avg += otherBoid.dx
+                            yvel_avg += otherBoid.dy
+                            xpos_avg += otherBoid.x
+                            ypos_avg += otherBoid.y
+                            neighboring_boids += 1
+            separation = boid.separation()
+            if(neighboring_boids>0):
                 alignment = boid.alignment()
                 cohesion = boid.cohesion()
-                separation = boid.separation()
                 boid.dx = alignment[0] + cohesion[0] + separation [0]
                 boid.dy = alignment[1] + cohesion[1] + separation[1]
             boid.update()

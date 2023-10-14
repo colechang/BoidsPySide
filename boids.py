@@ -124,7 +124,12 @@ class BoidsWidget(QWidget):
         painter.setBrush(QBrush(BOID_COLOR))
 
         for boid in self.boids:
+            if boid == self.boids[0]:
+                painter.setBrush(QBrush(QColor(255,0,0)))
+            else:
+                painter.setBrush(QBrush(BOID_COLOR))
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
+
 # for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
 # quadtree will reduce this
 #such ugly nested code! will segment code into functions after

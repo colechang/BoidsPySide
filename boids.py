@@ -66,13 +66,13 @@ class Boid:
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 0:
+        if self.x < 100:
             self.dx += TURN_FACTOR
-        if self.y < 0:
+        if self.y < 50:
             self.dy += TURN_FACTOR
-        if self.x > window_width:
+        if self.x > window_width-100:
             self.dx -= TURN_FACTOR
-        if self.y > window_height:
+        if self.y > window_height-50:
             self.dy -= TURN_FACTOR
 
         """    
@@ -185,7 +185,12 @@ class BoidsWindow(QMainWindow):
         self.avoid_slider, avoid_label = self.create_sliderSeparation("Avoid Factor", AVOID_FACTOR)
         self.centering_slider, centering_label = self.create_sliderCentering("Centering Factor", CENTERING_FACTOR)
         self.matching_slider, matching_label = self.create_sliderMatching("Matching Factor", MATCHING_FACTOR)
-
+        self.max_speed_slider, max_speed_label = self.create_sliderMaxSpeed("Max Speed", MAX_SPEED)
+        self.min_speed_slider,min_speed_slider = self.create_sliderMaxSpeed("Min Speed", MIN_SPEED)
+        slider_layout.addWidget(self.max_speed_slider)
+        slider_layout.addWidget(max_speed_label)
+        slider_layout.addWidget(self.min_speed_slider)
+        slider_layout.addWidget(min_speed_slider)
         slider_layout.addWidget(avoid_label)
         slider_layout.addWidget(self.avoid_slider)
         slider_layout.addWidget(centering_label)
@@ -205,6 +210,27 @@ class BoidsWindow(QMainWindow):
         # Add the layouts to the central widget
         layout.addWidget(boids_container)
         central_widget.setLayout(layout)
+
+    def create_sliderMaxSpeed(self,label_text,initial_value):
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(5,20)
+        slider.setValue(int(initial_value))
+        slider.valueChanged.connect(self.slider_value_changed)
+        
+        label = QLabel(label_text)
+        
+        return slider,label
+
+
+    def create_sliderMinSpeed(self,label_text,initial_value):
+        slider = QSlider(Qt.Horizontal)
+        slider.setRange(0,4)
+        slider.setValue(int(initial_value))
+        slider.valueChanged.connect(self.slider_value_changed)
+        
+        label = QLabel(label_text)
+        
+        return slider,label
 
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
@@ -241,7 +267,11 @@ class BoidsWindow(QMainWindow):
         AVOID_FACTOR = self.avoid_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 10000.0
         MATCHING_FACTOR = self.matching_slider.value() / 100.0
-
+    def speed_slider_value_changed(self):
+        global MAX_SPEED
+        global MIN_SPEED
+        MAX_SPEED = self.max_speed_slider.value()
+        MIN_SPEED = self.min_speed_slider.value()
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     screen = app.primaryScreen()

@@ -16,7 +16,7 @@ CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
 TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
 MAX_SPEED = 6.0   # Reduce to limit maximum speed
 MIN_SPEED = 3.0
-VIEWING_DISTANCE = 20.0  # Adjust to control the neighborhood size
+VIEWING_DISTANCE = 40.0  # Adjust to control the neighborhood size
 PROTECTED_RANGE = 8.0   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
 BIAS_INCREMENT = 0.0000004
@@ -74,25 +74,26 @@ class Boid:
             self.dx -= TURN_FACTOR
         if self.y > window_height:
             self.dy -= TURN_FACTOR
+
             
-"""       if (self.biasGroup =="LEFT"): 
-            if (self.dx > 0):
-                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-            else:
-                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+    #     if (self.biasGroup =="LEFT"): 
+    #         if (self.dx > 0):
+    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+    #         else:
+    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-        elif (self.biasGroup == "RIGHT"): # biased to left of screen
-            if (self.dx < 0):
-                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-            else:
-                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)"""
+    #     elif (self.biasGroup == "RIGHT"): # biased to left of screen
+    #         if (self.dx < 0):
+    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+    #         else:
+    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-    # biased to right of screen
-        if (self.biasGroup == "LEFT"):
-            self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
-    # biased to left of screen
-        elif (self.biasGroup== "RIGHT"):
-            self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
+    # # biased to right of screen
+    #     if (self.biasGroup == "LEFT"):
+    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
+    # # biased to left of screen
+    #     elif (self.biasGroup== "RIGHT"):
+    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
 
         speed = math.sqrt(abs(self.dx*self.dx + self.dy*self.dy))
         if speed < MIN_SPEED:

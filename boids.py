@@ -58,7 +58,7 @@ class Boid:
         cohesionx = (xpos_avg - self.x)*CENTERING_FACTOR
         cohesiony = (ypos_avg - self.y)*CENTERING_FACTOR
         return cohesionx,cohesiony
-    
+    # logic for predator boid
     # def tend_to_place(self):
     #     self.dx += -self.x/10000
     #     self.dy += -self.y/10000

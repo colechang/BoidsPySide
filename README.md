@@ -16,7 +16,7 @@ The Boids Simulation is a Python application that demonstrates the behavior of a
 ## Requirements
 
 - Python 3
-- PySide6 library (install with `pip install PySide6`)
+- PySide6 library (install with `pip3 install PySide6`)
 
 ## How to Run
 

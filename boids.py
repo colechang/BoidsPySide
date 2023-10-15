@@ -7,8 +7,7 @@ import math
 
 # Define the parameters for the boids simulation
 NUM_BOIDS = 300
-BOID_SIZE = 5.0
-BOID_SPEED = 5
+BOID_SIZE = 5
 BOID_COLOR = QColor(250, 240, 240)
 #Variables PySide will control 0.0-1.0 Tunable
 AVOID_FACTOR = 0.05   # Increase to encourage more avoidance
@@ -17,10 +16,10 @@ CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
 TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
 MAX_SPEED = 6.0   # Reduce to limit maximum speed
 MIN_SPEED = 3.0
-VIEWING_DISTANCE = 5.0  # Adjust to control the neighborhood size
-PROTECTED_RANGE = 2.0   # Increase to encourage more collision avoidance
+VIEWING_DISTANCE = 20.0  # Adjust to control the neighborhood size
+PROTECTED_RANGE = 8.0   # Increase to encourage more collision avoidance
 MAXBIAS = 0.01
-BIAS_INCREMENT = 0.000004
+BIAS_INCREMENT = 0.0000004
 BIAS_GROUPS = ["LEFT","RIGHT"]
 BIAS_VAL = 0.009
 SCREEN_WIDTH = 0
@@ -32,37 +31,33 @@ class Boid:
     def __init__(self, x, y,group):
         self.x = x
         self.y = y
-        self.biasGroup = group
+        #self.biasGroup = group
         self.dx = random.uniform(MIN_SPEED, MAX_SPEED)  # x velocity
         self.dy = random.uniform(MIN_SPEED, MAX_SPEED)  # y velocity
-        self.neighboring_boids = 0
-        self.close_dx = self.close_dy = 0.0
-        self.xvel_avg = self.yvel_avg = 0.0
-        self.xpos_avg = self.ypos_avg = 0.0
-        self.biasval = BIAS_VAL
+        #self.biasval = BIAS_VAL
     #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
-    def separation(self):
-        self.dx += self.close_dx * AVOID_FACTOR
-        self.dy += self.close_dy * AVOID_FACTOR
-        return self.dx,self.dy
+    def separation(self,close_dx, close_dy):
+        separationx = close_dx * AVOID_FACTOR
+        separationy = close_dy * AVOID_FACTOR
+        return separationx,separationy
 
     #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
-    def alignment(self):
-        if (self.neighboring_boids > 0):
-            self.xvel_avg = self.xvel_avg/self.neighboring_boids
-            self.yvel_avg = self.yvel_avg/self.neighboring_boids
-        self.dx += (self.xvel_avg - self.dx)*MATCHING_FACTOR
-        self.dy += (self.yvel_avg - self.dy)*MATCHING_FACTOR
-        return self.dx,self.dy
+    def alignment(self,xvel_avg,yvel_avg,neighboring_boids):
+        if (neighboring_boids > 0):
+            xvel_avg = xvel_avg/neighboring_boids
+            yvel_avg = yvel_avg/neighboring_boids
+        alignmentx = (xvel_avg - self.dx)*MATCHING_FACTOR
+        alignmenty = (yvel_avg - self.dy)*MATCHING_FACTOR
+        return alignmentx,alignmenty
     
     #Every bird attempts to move towards the average position of other nearby birds.
-    def cohesion(self):
-        if (self.neighboring_boids > 0):
-            self.xpos_avg = self.xpos_avg/self.neighboring_boids
-            self.ypos_avg = self.ypos_avg/self.neighboring_boids
-        self.dx += (self.xpos_avg - self.x)*CENTERING_FACTOR
-        self.dy += (self.ypos_avg - self.y)*CENTERING_FACTOR
-        return self.dx,self.dy
+    def cohesion(self,xpos_avg,ypos_avg,neighboring_boids):
+        if (neighboring_boids > 0):
+            xpos_avg = xpos_avg/neighboring_boids
+            ypos_avg = ypos_avg/neighboring_boids
+        cohesionx = (xpos_avg - self.x)*CENTERING_FACTOR
+        cohesiony = (ypos_avg - self.y)*CENTERING_FACTOR
+        return cohesionx,cohesiony
     
     # def tend_to_place(self):
     #     self.dx += -self.x/10000
@@ -71,33 +66,33 @@ class Boid:
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 200:
-            self.dx = self.dx + TURN_FACTOR
-        if self.x > window_width-200:
-            self.dx = self.dx - TURN_FACTOR
-        if self.y < 200:
-            self.dy = self.dy + TURN_FACTOR
-        if self.y > window_height-200:
-            self.dy = self.dy - TURN_FACTOR
+        if self.x < 0:
+            self.dx += TURN_FACTOR
+        if self.y < 0:
+            self.dy += TURN_FACTOR
+        if self.x > window_width:
+            self.dx -= TURN_FACTOR
+        if self.y > window_height:
+            self.dy -= TURN_FACTOR
             
-        if (self.biasGroup =="LEFT"): 
-            if (self.dx > 0):
-                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-            else:
-                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+    #     if (self.biasGroup =="LEFT"): 
+    #         if (self.dx > 0):
+    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+    #         else:
+    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-        elif (self.biasGroup == "RIGHT"): # biased to left of screen
-            if (self.dx < 0):
-                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-            else:
-                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+    #     elif (self.biasGroup == "RIGHT"): # biased to left of screen
+    #         if (self.dx < 0):
+    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+    #         else:
+    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-    # biased to right of screen
-        if (self.biasGroup == "LEFT"):
-            self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
-    # biased to left of screen
-        elif (self.biasGroup== "RIGHT"):
-            self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
+    # # biased to right of screen
+    #     if (self.biasGroup == "LEFT"):
+    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
+    # # biased to left of screen
+    #     elif (self.biasGroup== "RIGHT"):
+    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
 
         speed = math.sqrt(abs(self.dx*self.dx + self.dy*self.dy))
         if speed < MIN_SPEED:
@@ -136,32 +131,37 @@ class BoidsWidget(QWidget):
 
 # for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
 # quadtree will reduce this
-#such ugly nested code! will segment code into functions after
+# such ugly nested code! will segment code into functions after
+# constant values did not start at 0, so subsequent updates on 1 boid would be carried out for the rest of the simulation
+# instead of starting off at 0 for every frame, since other boids, all boids would be contain a large list of neighbours instead
+# of resetting to zero based on the location of a the boid at the given time
     def update_boids(self):
         for boid in self.boids:
-            xvel_avg = yvel_avg = xpos_avg = ypos_avg = neighboring_boids = 0
+            xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
+            neighboring_boids = 0
             for otherBoid in self.boids:
                 if(boid!=otherBoid): #or boid.biasGroup=="LEADER"
                     dx = boid.x - otherBoid.x
                     dy = boid.y - otherBoid.y
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
-                        squaredDistance = dx*dx + dy*dy
+                        squaredDistance = (dx*dx) + (dy*dy)
                         if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
-                            #boid.close_dx = boid.close_dx - boid.x - otherBoid.x
-                            boid.close_dx += boid.x - otherBoid.x
-                            boid.close_dy += boid.y - otherBoid.y
+                            close_dx += boid.x - otherBoid.x
+                            close_dy += boid.y - otherBoid.y
                         elif (squaredDistance < (VIEWING_DISTANCE*VIEWING_DISTANCE)):
                             xvel_avg += otherBoid.dx
                             yvel_avg += otherBoid.dy
                             xpos_avg += otherBoid.x
                             ypos_avg += otherBoid.y
                             neighboring_boids += 1
-            separation = boid.separation()
+            separation = boid.separation(close_dx,close_dy)
+            boid.dx += separation[0]
+            boid.dy += separation[1]
             if(neighboring_boids>0):
-                alignment = boid.alignment()
-                cohesion = boid.cohesion()
-                boid.dx = alignment[0] + cohesion[0] + separation [0]
-                boid.dy = alignment[1] + cohesion[1] + separation[1]
+                alignment = boid.alignment(xvel_avg,yvel_avg,neighboring_boids)
+                cohesion = boid.cohesion(xpos_avg,ypos_avg,neighboring_boids)
+                boid.dx += alignment[0] + cohesion[0] 
+                boid.dy += alignment[1] + cohesion[1]
             boid.update()
         self.update()
 
@@ -207,7 +207,7 @@ class BoidsWindow(QMainWindow):
 
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
+        slider.setRange(1, 100)
         slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
@@ -216,7 +216,7 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderCentering(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
+        slider.setRange(1, 100)
         slider.setValue(int(initial_value * 10000))
         slider.valueChanged.connect(self.slider_value_changed)
 
@@ -225,7 +225,7 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderMatching(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
+        slider.setRange(1, 100)
         slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
@@ -244,9 +244,8 @@ class BoidsWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     screen = app.primaryScreen()
-    size = screen.size()
-    window_width = size.width()
-    window_height = size.height()
+    window_width = 800
+    window_height = 600
     SCREEN_HEIGHT = window_height
     SCREEN_WIDTH = window_width
 
@@ -254,3 +253,5 @@ if __name__ == "__main__":
     window.show()
 
     sys.exit(app.exec_())
+
+    #double adding tuning values

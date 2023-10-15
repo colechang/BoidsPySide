@@ -75,26 +75,26 @@ class Boid:
         if self.y > window_height:
             self.dy -= TURN_FACTOR
 
-            
-    #     if (self.biasGroup =="LEFT"): 
-    #         if (self.dx > 0):
-    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-    #         else:
-    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+        """    
+        if (self.biasGroup =="LEFT"): 
+            if (self.dx > 0):
+                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+            else:
+                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-    #     elif (self.biasGroup == "RIGHT"): # biased to left of screen
-    #         if (self.dx < 0):
-    #             self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
-    #         else:
-    #             self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
+        elif (self.biasGroup == "RIGHT"): # biased to left of screen
+            if (self.dx < 0):
+                self.biasval = min(MAXBIAS, self.biasval + BIAS_INCREMENT)
+            else:
+                self.biasval = max(BIAS_INCREMENT, self.biasval - BIAS_INCREMENT)
 
-    # # biased to right of screen
-    #     if (self.biasGroup == "LEFT"):
-    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
-    # # biased to left of screen
-    #     elif (self.biasGroup== "RIGHT"):
-    #         self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
-
+    # biased to right of screen
+        if (self.biasGroup == "LEFT"):
+            self.dx = (1 - self.biasval)*self.dx + (self.biasval * 1)
+    # biased to left of screen
+        elif (self.biasGroup== "RIGHT"):
+            self.dx = (1 - self.biasval)*self.dx + (self.biasval * (-1))
+        """
         speed = math.sqrt(abs(self.dx*self.dx + self.dy*self.dy))
         if speed < MIN_SPEED:
             self.dx = (self.dx/speed)*MIN_SPEED
@@ -254,5 +254,3 @@ if __name__ == "__main__":
     window.show()
 
     sys.exit(app.exec_())
-
-    #double adding tuning values

@@ -2,6 +2,8 @@
 
 ## Overview
 
+![Representation of Boids in Nature](image.png)
+
 The Boids Simulation is a Python application that demonstrates the behavior of a flock of birds (boids) in a window. This project uses PySide6 to create a graphical user interface (GUI) for the simulation. Boids are simulated as small circles that move around the screen, mimicking flocking behavior.
 
 <!--![Boids Simulation Screenshot](screenshot.png)-->
@@ -26,6 +28,7 @@ The Boids Simulation is a Python application that demonstrates the behavior of a
    ```bash
    git clone https://github.com/colechang/BoidsPySide.git
    ```
+
 ## References
 
 - https://vergenet.net/~conrad/boids/

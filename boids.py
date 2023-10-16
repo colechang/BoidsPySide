@@ -34,7 +34,7 @@ SCREEN_HEIGHT = 0
 
 # Class for an individual boid
 class Boid:
-    def __init__(self, x, y, group):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
         self.dx = random.uniform(MIN_SPEED, MAX_SPEED)  # x velocity
@@ -116,8 +116,11 @@ class Boid:
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"PREDATOR")] + [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
+        self.boids = [Boid(random.uniform(0, window_width), random.uniform(
+            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
+        
+        """self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"PREDATOR")] + [Boid(random.uniform(0, window_width), random.uniform(
+            0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed"""
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
         self.timer.start(1)  # Update every 20 milliseconds
@@ -265,6 +268,7 @@ class BoidsWindow(QMainWindow):
         AVOID_FACTOR = self.avoid_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 10000.0
         MATCHING_FACTOR = self.matching_slider.value() / 100.0
+    
     def speed_slider_value_changed(self):
         global MAX_SPEED
         global MIN_SPEED

@@ -26,7 +26,7 @@ The Boids Simulation is a Python application that demonstrates the behavior of a
    ```bash
    git clone https://github.com/colechang/BoidsPySide.git
    ```
-##References
+## References
 
 - https://vergenet.net/~conrad/boids/
 - https://vanhunteradams.com/Pico/Animal_Movement/Boids-algorithm.html

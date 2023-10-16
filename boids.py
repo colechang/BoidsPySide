@@ -2,62 +2,67 @@ import sys
 import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
 import math
 
 # Define the parameters for the boids simulation
 NUM_BOIDS = 300
 BOID_SIZE = 5
 BOID_COLOR = QColor(250, 240, 240)
-#Variables PySide will control 0.0-1.0 Tunable
-AVOID_FACTOR = 0.05   # Increase to encourage more avoidance
-MATCHING_FACTOR = 0.05   # Increase to encourage more alignment
-CENTERING_FACTOR = 0.0005   # Increase to encourage more cohesion
-TURN_FACTOR = 0.2   # Reduce to make turns less aggressive
-MAX_SPEED = 6.0   # Reduce to limit maximum speed
-MIN_SPEED = 3.0
-VIEWING_DISTANCE = 40.0  # Adjust to control the neighborhood size
-PROTECTED_RANGE = 8.0   # Increase to encourage more collision avoidance
-MAXBIAS = 0.01
+
+# Tunable parameters (0.0 - 1.0)
+AVOID_FACTOR = 0.05     # Increase to encourage more avoidance
+MATCHING_FACTOR = 0.05  # Increase to encourage more alignment
+CENTERING_FACTOR = 0.0005  # Increase to encourage more cohesion
+TURN_FACTOR = 0.2  # Reduce to make turns less aggressive
+MAX_SPEED = 6.0  # Reduce to limit maximum speed
+MIN_SPEED = 3.0  # Minimum speed
+
+# Viewing and collision avoidance distances
+VIEWING_DISTANCE = 40.0
+PROTECTED_RANGE = 8.0
+
+# Boid bias parameters
+MAX_BIAS = 0.01
 BIAS_INCREMENT = 0.0000004
-BIAS_GROUPS = ["LEFT","RIGHT"]
+BIAS_GROUPS = ["LEFT", "RIGHT"]
 BIAS_VAL = 0.009
+
+# Screen dimensions
 SCREEN_WIDTH = 0
 SCREEN_HEIGHT = 0
 
 # Class for an individual boid
-# right now comparing every boid to every boid n*n Time complexity
 class Boid:
-    def __init__(self, x, y,group):
+    def __init__(self, x, y, group):
         self.x = x
         self.y = y
-        #self.biasGroup = group
         self.dx = random.uniform(MIN_SPEED, MAX_SPEED)  # x velocity
         self.dy = random.uniform(MIN_SPEED, MAX_SPEED)  # y velocity
-        #self.biasval = BIAS_VAL
-    #Each bird attempts to maintain a reasonable amount of distance between itself and any nearby birds, to prevent overcrowding.
-    def separation(self,close_dx, close_dy):
-        separationx = close_dx * AVOID_FACTOR
-        separationy = close_dy * AVOID_FACTOR
-        return separationx,separationy
 
-    #Birds try to change their position so that it corresponds with the average alignment of other nearby birds.
-    def alignment(self,xvel_avg,yvel_avg,neighboring_boids):
-        if (neighboring_boids > 0):
-            xvel_avg = xvel_avg/neighboring_boids
-            yvel_avg = yvel_avg/neighboring_boids
-        alignmentx = (xvel_avg - self.dx)*MATCHING_FACTOR
-        alignmenty = (yvel_avg - self.dy)*MATCHING_FACTOR
-        return alignmentx,alignmenty
-    
-    #Every bird attempts to move towards the average position of other nearby birds.
-    def cohesion(self,xpos_avg,ypos_avg,neighboring_boids):
-        if (neighboring_boids > 0):
-            xpos_avg = xpos_avg/neighboring_boids
-            ypos_avg = ypos_avg/neighboring_boids
-        cohesionx = (xpos_avg - self.x)*CENTERING_FACTOR
-        cohesiony = (ypos_avg - self.y)*CENTERING_FACTOR
-        return cohesionx,cohesiony
+    def separation(self, close_dx, close_dy):
+        # Calculate separation based on nearby boids
+        separation_x = close_dx * AVOID_FACTOR
+        separation_y = close_dy * AVOID_FACTOR
+        return separation_x, separation_y
+
+    def alignment(self, x_vel_avg, y_vel_avg, neighboring_boids):
+        # Calculate alignment based on nearby boids
+        if neighboring_boids > 0:
+            x_vel_avg = x_vel_avg / neighboring_boids
+            y_vel_avg = y_vel_avg / neighboring_boids
+        alignment_x = (x_vel_avg - self.dx) * MATCHING_FACTOR
+        alignment_y = (y_vel_avg - self.dy) * MATCHING_FACTOR
+        return alignment_x, alignment_y
+
+    def cohesion(self, x_pos_avg, y_pos_avg, neighboring_boids):
+        # Calculate cohesion based on nearby boids
+        if neighboring_boids > 0:
+            x_pos_avg = x_pos_avg / neighboring_boids
+            y_pos_avg = y_pos_avg / neighboring_boids
+        cohesion_x = (x_pos_avg - self.x) * CENTERING_FACTOR
+        cohesion_y = (y_pos_avg - self.y) * CENTERING_FACTOR
+        return cohesion_x, cohesion_y
     # logic for predator boid
     # def tend_to_place(self):
     #     self.dx += -self.x/10000
@@ -66,13 +71,13 @@ class Boid:
     def update(self):
         # change to collide with screen boundaries
         # FIXED: changed direction instead of location
-        if self.x < 100:
+        if self.x < 150:
             self.dx += TURN_FACTOR
-        if self.y < 50:
+        if self.y < 100:
             self.dy += TURN_FACTOR
-        if self.x > window_width-100:
+        if self.x > window_width-150:
             self.dx -= TURN_FACTOR
-        if self.y > window_height-50:
+        if self.y > window_height-100:
             self.dy -= TURN_FACTOR
 
         """    
@@ -111,7 +116,7 @@ class Boid:
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"LEADER")] + [Boid(random.uniform(0, window_width), random.uniform(
+        self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"PREDATOR")] + [Boid(random.uniform(0, window_width), random.uniform(
             0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
@@ -129,13 +134,6 @@ class BoidsWidget(QWidget):
             # else:
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
             
-
-# for now it is slow as every boid will be compared to every other boid in range causing n*n time complexity
-# quadtree will reduce this
-# such ugly nested code! will segment code into functions after
-# constant values did not start at 0, so subsequent updates on 1 boid would be carried out for the rest of the simulation
-# instead of starting off at 0 for every frame, since other boids, all boids would be contain a large list of neighbours instead
-# of resetting to zero based on the location of a the boid at the given time
     def update_boids(self):
         for boid in self.boids:
             xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
@@ -272,6 +270,7 @@ class BoidsWindow(QMainWindow):
         global MIN_SPEED
         MAX_SPEED = self.max_speed_slider.value()
         MIN_SPEED = self.min_speed_slider.value()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     screen = app.primaryScreen()

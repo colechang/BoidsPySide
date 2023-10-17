@@ -27,9 +27,7 @@ The Boids Simulation is a Python application that demonstrates the behavior of a
    git clone https://github.com/colechang/BoidsPySide.git
    ```
 
-## Example
-
-![Boids Simulation Screenshot](boids.gif)
+<!--## Example ![Boids Simulation Screenshot](boids.gif)-->
 
 ## References
 

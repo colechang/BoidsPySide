@@ -19,8 +19,8 @@ MAX_SPEED = 6.0  # Reduce to limit maximum speed
 MIN_SPEED = 3.0  # Minimum speed
 
 # Viewing and collision avoidance distances
-VIEWING_DISTANCE = 40.0
-PROTECTED_RANGE = 8.0
+VIEWING_DISTANCE = 10.0
+PROTECTED_RANGE = 2.0
 
 # Screen dimensions
 SCREEN_WIDTH = 0
@@ -47,8 +47,6 @@ class Boundary:
             self.y + self.height < other.y or
             other.y + other.height < self.y
         )
-
-
 class Quadtree:
     def __init__(self, boundary, capacity):
         self.boundary = boundary  # The boundary of this quadtree node
@@ -198,7 +196,7 @@ class BoidsWidget(QWidget):
             self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(1)  # Update every 20 milliseconds
+        self.timer.start(16)  # Update every 20 milliseconds
 
     def paintEvent(self,event):
         painter = QPainter(self)

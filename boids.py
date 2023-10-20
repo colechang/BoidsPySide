@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 300
+NUM_BOIDS = 800
 BOID_SIZE = 5
 BOID_COLOR = QColor(250, 240, 240)
 
@@ -26,6 +26,96 @@ PROTECTED_RANGE = 8.0
 SCREEN_WIDTH = 0
 SCREEN_HEIGHT = 0
 
+
+class Boundary:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def contains_point(self, point):
+        return (
+            self.x <= point.x <= self.x + self.width and
+            self.y <= point.y <= self.y + self.height
+        )
+
+    def intersects(self, other):
+        return not (
+            self.x + self.width < other.x or
+            other.x + other.width < self.x or
+            self.y + self.height < other.y or
+            other.y + other.height < self.y
+        )
+
+
+class Quadtree:
+    def __init__(self, boundary, capacity):
+        self.boundary = boundary  # The boundary of this quadtree node
+        self.capacity = capacity  # The maximum number of boids a node can hold
+        self.boids = []  # The boids stored in this node
+        self.nw = None
+        self.ne = None
+        self.sw = None
+        self.se = None
+
+    # Method to insert a boid into the quadtree
+    def insert(self, boid):
+        if not self.boundary.contains_point(boid):
+            return False  # Boid is not within the boundary, so we won't add it
+
+        if len(self.boids) < self.capacity:
+            self.boids.append(boid)
+            return True  # Added the boid to this node
+
+        if self.nw is None:
+            self.subdivide()  # Split this node into four child nodes if it's not already
+
+        # Try adding the boid to the appropriate child node(s)
+        if self.nw.insert(boid):
+            return True
+        if self.ne.insert(boid):
+            return True
+        if self.sw.insert(boid):
+            return True
+        if self.se.insert(boid):
+            return True
+
+    # Method to subdivide the current node into four child nodes
+    def subdivide(self):
+        x = self.boundary.x
+        y = self.boundary.y
+        w = self.boundary.width / 2
+        h = self.boundary.height / 2
+        ne_boundary = Boundary(x + w, y, w, h)
+        nw_boundary = Boundary(x, y, w, h)
+        se_boundary = Boundary(x + w, y + h, w, h)
+        sw_boundary = Boundary(x, y + h, w, h)
+        self.ne = Quadtree(ne_boundary, self.capacity)
+        self.nw = Quadtree(nw_boundary, self.capacity)
+        self.se = Quadtree(se_boundary, self.capacity)
+        self.sw = Quadtree(sw_boundary, self.capacity)
+
+    # Method to query boids within a given boundary
+    def query(self, search_boundary):
+        found_boids = []
+        if not self.boundary.intersects(search_boundary):
+            return found_boids
+
+        for boid in self.boids:
+            if search_boundary.contains_point(boid):
+                found_boids.append(boid)
+
+        if self.nw is None:
+            return found_boids
+
+        found_boids.extend(self.nw.query(search_boundary))
+        found_boids.extend(self.ne.query(search_boundary))
+        found_boids.extend(self.sw.query(search_boundary))
+        found_boids.extend(self.se.query(search_boundary))
+
+        return found_boids
+
 # Class for an individual boid
 class Boid:
     def __init__(self, x, y):
@@ -42,29 +132,21 @@ class Boid:
 
     def alignment(self, x_vel_avg, y_vel_avg, neighboring_boids):
         # Calculate alignment based on nearby boids
-        if neighboring_boids > 0:
-            x_vel_avg = x_vel_avg / neighboring_boids
-            y_vel_avg = y_vel_avg / neighboring_boids
+        x_vel_avg = x_vel_avg / neighboring_boids
+        y_vel_avg = y_vel_avg / neighboring_boids
         alignment_x = (x_vel_avg - self.dx) * MATCHING_FACTOR
         alignment_y = (y_vel_avg - self.dy) * MATCHING_FACTOR
         return alignment_x, alignment_y
 
     def cohesion(self, x_pos_avg, y_pos_avg, neighboring_boids):
         # Calculate cohesion based on nearby boids
-        if neighboring_boids > 0:
-            x_pos_avg = x_pos_avg / neighboring_boids
-            y_pos_avg = y_pos_avg / neighboring_boids
+        x_pos_avg = x_pos_avg / neighboring_boids
+        y_pos_avg = y_pos_avg / neighboring_boids
         cohesion_x = (x_pos_avg - self.x) * CENTERING_FACTOR
         cohesion_y = (y_pos_avg - self.y) * CENTERING_FACTOR
         return cohesion_x, cohesion_y
-    # logic for predator boid
-    # def tend_to_place(self):
-    #     self.dx += -self.x/10000
-    #     self.dy += -self.y/10000
 
     def update(self):
-        # change to collide with screen boundaries
-        # FIXED: changed direction instead of location
         if self.x < 150:
             self.dx += TURN_FACTOR
         if self.y < 100:
@@ -101,7 +183,6 @@ class Boid:
         if speed > MAX_SPEED:
             self.dx = (self.dx/speed)*MAX_SPEED
             self.dy = (self.dy/speed)*MAX_SPEED
-        #self.tend_to_place()
         self.x += self.dx
         self.y += self.dy
 
@@ -110,11 +191,11 @@ class Boid:
 class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.boids = [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed
-        
-        """self.boids = [Boid(random.uniform(0,window_width),random.uniform(0,window_height),"PREDATOR")] + [Boid(random.uniform(0, window_width), random.uniform(
-            0, window_height),random.choice(BIAS_GROUPS)) for _ in range(NUM_BOIDS)]  # array of boids with different positions and speed"""
+        self.boundary = Boundary(0, 0, window_width, window_height)
+        self.quadtree = Quadtree(self.boundary, 4)  # Adjust the capacity as needed
+        self.boids = [Boid(random.uniform(0, window_width), random.uniform(0, window_height)) for _ in range(NUM_BOIDS)]
+        for boid in self.boids:
+            self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
         self.timer.start(1)  # Update every 20 milliseconds
@@ -125,18 +206,15 @@ class BoidsWidget(QWidget):
         painter.setBrush(QBrush(BOID_COLOR))
 
         for boid in self.boids:
-            # if boid == self.boids[0]:
-            #     painter.setBrush(QBrush(QColor(255,0,0)))
-            #     painter.drawEllipse(boid.x, boid.y, BOID_SIZE+3, BOID_SIZE+3)
-            # else:
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
             
     def update_boids(self):
         for boid in self.boids:
+            search_boundary = Boundary(boid.x - VIEWING_DISTANCE, boid.y - VIEWING_DISTANCE, 2 * VIEWING_DISTANCE, 2 * VIEWING_DISTANCE)
+            neighboring_boids = self.quadtree.query(search_boundary)
             xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
-            neighboring_boids = 0
-            for otherBoid in self.boids:
-                if(boid!=otherBoid): #or boid.biasGroup=="LEADER"
+            for otherBoid in neighboring_boids:
+                if(boid!=otherBoid):
                     dx = boid.x - otherBoid.x
                     dy = boid.y - otherBoid.y
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
@@ -149,13 +227,12 @@ class BoidsWidget(QWidget):
                             yvel_avg += otherBoid.dy
                             xpos_avg += otherBoid.x
                             ypos_avg += otherBoid.y
-                            neighboring_boids += 1
             separation = boid.separation(close_dx,close_dy)
             boid.dx += separation[0]
             boid.dy += separation[1]
-            if(neighboring_boids>0):
-                alignment = boid.alignment(xvel_avg,yvel_avg,neighboring_boids)
-                cohesion = boid.cohesion(xpos_avg,ypos_avg,neighboring_boids)
+            if(len(neighboring_boids)>0):
+                alignment = boid.alignment(xvel_avg,yvel_avg,len(neighboring_boids))
+                cohesion = boid.cohesion(xpos_avg,ypos_avg,len(neighboring_boids))
                 boid.dx += alignment[0] + cohesion[0] 
                 boid.dy += alignment[1] + cohesion[1]
             boid.update()

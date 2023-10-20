@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 800
+NUM_BOIDS = 100
 BOID_SIZE = 5
 BOID_COLOR = QColor(250, 240, 240)
 
@@ -19,8 +19,8 @@ MAX_SPEED = 6.0  # Reduce to limit maximum speed
 MIN_SPEED = 3.0  # Minimum speed
 
 # Viewing and collision avoidance distances
-VIEWING_DISTANCE = 10.0
-PROTECTED_RANGE = 2.0
+VIEWING_DISTANCE = 20.0
+PROTECTED_RANGE = 4.0
 
 # Screen dimensions
 SCREEN_WIDTH = 0
@@ -196,7 +196,7 @@ class BoidsWidget(QWidget):
             self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(16)  # Update every 20 milliseconds
+        self.timer.start(16)
 
     def paintEvent(self,event):
         painter = QPainter(self)
@@ -215,6 +215,7 @@ class BoidsWidget(QWidget):
                 if(boid!=otherBoid):
                     dx = boid.x - otherBoid.x
                     dy = boid.y - otherBoid.y
+                    #alter viewing distance and protected range values and checks if withing boundary instead
                     if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
                         squaredDistance = (dx*dx) + (dy*dy)
                         if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
@@ -351,6 +352,13 @@ if __name__ == "__main__":
     window_height = 600
     SCREEN_HEIGHT = window_height
     SCREEN_WIDTH = window_width
+    
+    """    screen = app.primaryScreen()
+    size = screen.size()
+    window_width = size.width()
+    window_height = size.height()
+    SCREEN_HEIGHT = window_height
+    SCREEN_WIDTH = window_width"""
 
     window = BoidsWindow()
     window.show()

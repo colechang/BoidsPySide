@@ -1,6 +1,6 @@
 • Add sliders to adjust Boids Behavior ✓
     • amount of particles ~
-    • Size ~
+    • Size ✓
     • Coherence ✓
         Every bird attempts to move towards the average position of other nearby birds.
     • Alignment ✓
@@ -9,8 +9,8 @@
          Each bird attempts to maintain a reasonable amount of distance 
          between itself and any nearby birds, to prevent overcrowding.
 • For now the the boids will be put in a list ✓
-• Quadtree Implementation to increase speed and memory
-• Spatial Hashing
+• Quadtree Implementation to increase speed and memory ✓
+• Spatial Hashing ✓
 
 • Add shading
     would have to make boids 3d and cast shadows off boids
@@ -19,9 +19,7 @@
 • Add biases to boids ✓
 • Segment code in update_boids function into seperate functions
 • Instead of using sqrt function as it is slow, I can use the "alpha max plus beta min" approximation
-• I think since their is no leader the boids dont have a purpose to fly elsewhere ✓
 UPDATE
     Boids have movement and independent logic ✓
-    But they all end up in the corner
     Need to fine tune Constants ✓
 

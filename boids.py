@@ -7,21 +7,22 @@ import math
 
 # Define the parameters for the boids simulation
 NUM_BOIDS = 400
-BOID_SIZE = 4
+BOID_SIZE = 5
 BOID_COLOR = QColor(250, 240, 240)
+
+INTERPOLATION_ALPHA = 0.1 
 
 # Tunable parameters (0.0 - 1.0)
 AVOID_FACTOR = 0.5     # Increase to encourage more avoidance
 MATCHING_FACTOR = 0.05  # Increase to encourage more alignment
 CENTERING_FACTOR = 0.00005  # Increase to encourage more cohesion
-TURN_FACTOR = 0.2  # Reduce to make turns less aggressive
+TURN_FACTOR = 0.3  # Reduce to make turns less aggressive
 MAX_SPEED = 6.0  # Reduce to limit maximum speed
 MIN_SPEED = 3.0  # Minimum speed
 
 # Viewing and collision avoidance distances
 VIEWING_DISTANCE = 40.0
 PROTECTED_RANGE = 10.0
-
 
 # Screen dimensions
 SCREEN_WIDTH = 0
@@ -143,6 +144,11 @@ class Boid:
         cohesion_x = (x_pos_avg - self.x) * CENTERING_FACTOR
         cohesion_y = (y_pos_avg - self.y) * CENTERING_FACTOR
         return cohesion_x, cohesion_y
+    
+    def lerp(self, target_x, target_y, alpha):
+        self.x = (1.0 - alpha) * self.x + alpha * target_x
+        self.y = (1.0 - alpha) * self.y + alpha * target_y
+
 
     def update(self):
         if self.x < 150:
@@ -211,8 +217,8 @@ class BoidsWidget(QWidget):
         for boid in self.boids:
             search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
             neighboring_boids = self.quadtree.query(search_boundary)
-            print(len(neighboring_boids))
             xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
+            
             for otherBoid in neighboring_boids:
                 if(boid!=otherBoid):
                     dx = boid.x - otherBoid.x
@@ -236,6 +242,9 @@ class BoidsWidget(QWidget):
                 cohesion = boid.cohesion(xpos_avg,ypos_avg,len(neighboring_boids))
                 boid.dx += alignment[0] + cohesion[0] 
                 boid.dy += alignment[1] + cohesion[1]
+            new_x = boid.x + boid.dx
+            new_y = boid.y + boid.dy
+            boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
             boid.update()
             
         self.update()
@@ -308,8 +317,8 @@ class BoidsWindow(QMainWindow):
 
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 1000)
-        slider.setValue(int(initial_value * 100))
+        slider.setRange(1, 10)
+        slider.setValue(int(initial_value * 10))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -317,7 +326,7 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderCentering(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 100)
+        slider.setRange(1, 10)
         slider.setValue(int(initial_value * 10000))
         slider.valueChanged.connect(self.slider_value_changed)
 
@@ -326,8 +335,8 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderMatching(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 1000)
-        slider.setValue(int(initial_value * 10))
+        slider.setRange(1, 10)
+        slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -338,9 +347,10 @@ class BoidsWindow(QMainWindow):
         global AVOID_FACTOR
         global CENTERING_FACTOR
         global MATCHING_FACTOR
-        AVOID_FACTOR = self.avoid_slider.value() / 100.0
+        AVOID_FACTOR = self.avoid_slider.value() / 10.0
+        MATCHING_FACTOR = self.matching_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 10000.0
-        MATCHING_FACTOR = self.matching_slider.value() / 10.0
+
     
     def speed_slider_value_changed(self):
         global MAX_SPEED
@@ -350,18 +360,18 @@ class BoidsWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # screen = app.primaryScreen()
-    # window_width = 800
-    # window_height = 600
-    # SCREEN_HEIGHT = window_height
-    # SCREEN_WIDTH = window_width
-    
     screen = app.primaryScreen()
-    size = screen.size()
-    window_width = size.width()
-    window_height = size.height()
+    window_width = 800
+    window_height = 600
     SCREEN_HEIGHT = window_height
     SCREEN_WIDTH = window_width
+    
+    # screen = app.primaryScreen()
+    # size = screen.size()
+    # window_width = size.width()
+    # window_height = size.height()
+    # SCREEN_HEIGHT = window_height
+    # SCREEN_WIDTH = window_width
 
     window = BoidsWindow()
     window.show()

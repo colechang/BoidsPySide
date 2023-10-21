@@ -6,21 +6,22 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 100
-BOID_SIZE = 5
+NUM_BOIDS = 400
+BOID_SIZE = 4
 BOID_COLOR = QColor(250, 240, 240)
 
 # Tunable parameters (0.0 - 1.0)
-AVOID_FACTOR = 0.05     # Increase to encourage more avoidance
+AVOID_FACTOR = 0.5     # Increase to encourage more avoidance
 MATCHING_FACTOR = 0.05  # Increase to encourage more alignment
-CENTERING_FACTOR = 0.0005  # Increase to encourage more cohesion
+CENTERING_FACTOR = 0.00005  # Increase to encourage more cohesion
 TURN_FACTOR = 0.2  # Reduce to make turns less aggressive
 MAX_SPEED = 6.0  # Reduce to limit maximum speed
 MIN_SPEED = 3.0  # Minimum speed
 
 # Viewing and collision avoidance distances
-VIEWING_DISTANCE = 20.0
-PROTECTED_RANGE = 4.0
+VIEWING_DISTANCE = 40.0
+PROTECTED_RANGE = 10.0
+
 
 # Screen dimensions
 SCREEN_WIDTH = 0
@@ -35,18 +36,16 @@ class Boundary:
         self.height = height
 
     def contains_point(self, point):
-        return (
-            self.x <= point.x <= self.x + self.width and
-            self.y <= point.y <= self.y + self.height
-        )
+        return (point.x >= self.x - self.width and
+                point.x < self.x + self.width and
+                point.y >= self.y - self.height and
+                point.y < self.y + self.height)
 
     def intersects(self, other):
-        return not (
-            self.x + self.width < other.x or
-            other.x + other.width < self.x or
-            self.y + self.height < other.y or
-            other.y + other.height < self.y
-        )
+        return not (other.x - other.width > self.x + self.width or
+            other.x + other.width < self.x - self.width or
+            other.y - other.height > self.y + self.height or
+            other.y + other.height < self.y - self.height)
 class Quadtree:
     def __init__(self, boundary, capacity):
         self.boundary = boundary  # The boundary of this quadtree node
@@ -78,17 +77,18 @@ class Quadtree:
             return True
         if self.se.insert(boid):
             return True
-
+    def clear(self):
+        self.boids = []
     # Method to subdivide the current node into four child nodes
     def subdivide(self):
         x = self.boundary.x
         y = self.boundary.y
         w = self.boundary.width / 2
         h = self.boundary.height / 2
-        ne_boundary = Boundary(x + w, y, w, h)
-        nw_boundary = Boundary(x, y, w, h)
-        se_boundary = Boundary(x + w, y + h, w, h)
-        sw_boundary = Boundary(x, y + h, w, h)
+        ne_boundary = Boundary(x + w, y + h, w, h)
+        nw_boundary = Boundary(x - w, y + h, w, h)
+        se_boundary = Boundary(x + w, y - h, w, h)
+        sw_boundary = Boundary(x - w, y - h, w, h)
         self.ne = Quadtree(ne_boundary, self.capacity)
         self.nw = Quadtree(nw_boundary, self.capacity)
         self.se = Quadtree(se_boundary, self.capacity)
@@ -205,11 +205,13 @@ class BoidsWidget(QWidget):
 
         for boid in self.boids:
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
-            
+    
     def update_boids(self):
+        self.quadtree.clear()
         for boid in self.boids:
-            search_boundary = Boundary(boid.x - VIEWING_DISTANCE, boid.y - VIEWING_DISTANCE, 2 * VIEWING_DISTANCE, 2 * VIEWING_DISTANCE)
+            search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
             neighboring_boids = self.quadtree.query(search_boundary)
+            print(len(neighboring_boids))
             xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
             for otherBoid in neighboring_boids:
                 if(boid!=otherBoid):
@@ -235,6 +237,7 @@ class BoidsWidget(QWidget):
                 boid.dx += alignment[0] + cohesion[0] 
                 boid.dy += alignment[1] + cohesion[1]
             boid.update()
+            
         self.update()
 
 class BoidsWindow(QMainWindow):
@@ -305,7 +308,7 @@ class BoidsWindow(QMainWindow):
 
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 100)
+        slider.setRange(1, 1000)
         slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
@@ -323,8 +326,8 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderMatching(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 100)
-        slider.setValue(int(initial_value * 100))
+        slider.setRange(1, 1000)
+        slider.setValue(int(initial_value * 10))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -337,7 +340,7 @@ class BoidsWindow(QMainWindow):
         global MATCHING_FACTOR
         AVOID_FACTOR = self.avoid_slider.value() / 100.0
         CENTERING_FACTOR = self.centering_slider.value() / 10000.0
-        MATCHING_FACTOR = self.matching_slider.value() / 100.0
+        MATCHING_FACTOR = self.matching_slider.value() / 10.0
     
     def speed_slider_value_changed(self):
         global MAX_SPEED
@@ -347,18 +350,18 @@ class BoidsWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    screen = app.primaryScreen()
-    window_width = 800
-    window_height = 600
-    SCREEN_HEIGHT = window_height
-    SCREEN_WIDTH = window_width
+    # screen = app.primaryScreen()
+    # window_width = 800
+    # window_height = 600
+    # SCREEN_HEIGHT = window_height
+    # SCREEN_WIDTH = window_width
     
-    """    screen = app.primaryScreen()
+    screen = app.primaryScreen()
     size = screen.size()
     window_width = size.width()
     window_height = size.height()
     SCREEN_HEIGHT = window_height
-    SCREEN_WIDTH = window_width"""
+    SCREEN_WIDTH = window_width
 
     window = BoidsWindow()
     window.show()

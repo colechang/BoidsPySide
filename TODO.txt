@@ -23,4 +23,5 @@ UPDATE
     Boids have movement and independent logic ✓
     Need to fine tune Constants ✓
     Parallelization
+    Graphical Features
 

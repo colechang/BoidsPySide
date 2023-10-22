@@ -6,23 +6,23 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 400
-BOID_SIZE = 5
-BOID_COLOR = QColor(250, 240, 240)
+NUM_BOIDS = 600
+BOID_SIZE = 2
+BOID_COLOR = QColor(255, 255, 255)
 
-INTERPOLATION_ALPHA = 0.1 
+INTERPOLATION_ALPHA = 0.3
 
 # Tunable parameters (0.0 - 1.0)
-AVOID_FACTOR = 0.5     # Increase to encourage more avoidance
-MATCHING_FACTOR = 0.05  # Increase to encourage more alignment
+AVOID_FACTOR = 0.05     # Increase to encourage more avoidance
+MATCHING_FACTOR = 0.005 # Increase to encourage more alignment
 CENTERING_FACTOR = 0.00005  # Increase to encourage more cohesion
 TURN_FACTOR = 0.3  # Reduce to make turns less aggressive
 MAX_SPEED = 6.0  # Reduce to limit maximum speed
 MIN_SPEED = 3.0  # Minimum speed
 
 # Viewing and collision avoidance distances
-VIEWING_DISTANCE = 40.0
-PROTECTED_RANGE = 10.0
+VIEWING_DISTANCE = 30.0
+PROTECTED_RANGE = 8.0
 
 # Screen dimensions
 SCREEN_WIDTH = 0
@@ -160,6 +160,16 @@ class Boid:
         if self.y > window_height-100:
             self.dy -= TURN_FACTOR
 
+        if self.x < 0:
+            self.x = window_width
+        elif self.x > window_width:
+            self.x = 0
+        if self.y < 0:
+            self.y = 0
+        elif self.y > window_height:
+            self.y = 0
+
+
         """    
         if (self.biasGroup =="LEFT"): 
             if (self.dx > 0):
@@ -196,13 +206,13 @@ class BoidsWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.boundary = Boundary(0, 0, window_width, window_height)
-        self.quadtree = Quadtree(self.boundary, 4)  # Adjust the capacity as needed
+        self.quadtree = Quadtree(self.boundary, 16)  # Adjust the capacity as needed
         self.boids = [Boid(random.uniform(0, window_width), random.uniform(0, window_height)) for _ in range(NUM_BOIDS)]
         for boid in self.boids:
             self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(16)
+        self.timer.start(32)
 
     def paintEvent(self,event):
         painter = QPainter(self)
@@ -218,7 +228,6 @@ class BoidsWidget(QWidget):
             search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
             neighboring_boids = self.quadtree.query(search_boundary)
             xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
-            
             for otherBoid in neighboring_boids:
                 if(boid!=otherBoid):
                     dx = boid.x - otherBoid.x
@@ -245,8 +254,7 @@ class BoidsWidget(QWidget):
             new_x = boid.x + boid.dx
             new_y = boid.y + boid.dy
             boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
-            boid.update()
-            
+            boid.update()            
         self.update()
 
 class BoidsWindow(QMainWindow):
@@ -254,6 +262,8 @@ class BoidsWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Boids Simulation")
         self.setGeometry(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+        self.setStyleSheet("background-color: #232529;")
 
         # Create the central widget
         central_widget = QWidget()
@@ -317,8 +327,8 @@ class BoidsWindow(QMainWindow):
 
     def create_sliderSeparation(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
-        slider.setValue(int(initial_value * 10))
+        slider.setRange(1, 100)
+        slider.setValue(int(initial_value * 100))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -326,8 +336,8 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderCentering(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
-        slider.setValue(int(initial_value * 10000))
+        slider.setRange(1, 100)
+        slider.setValue(int(initial_value * 100000))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -335,8 +345,8 @@ class BoidsWindow(QMainWindow):
         return slider, label
     def create_sliderMatching(self, label_text, initial_value):
         slider = QSlider(Qt.Horizontal)
-        slider.setRange(1, 10)
-        slider.setValue(int(initial_value * 100))
+        slider.setRange(1, 100)
+        slider.setValue(int(initial_value * 1000))
         slider.valueChanged.connect(self.slider_value_changed)
 
         label = QLabel(label_text)
@@ -347,11 +357,11 @@ class BoidsWindow(QMainWindow):
         global AVOID_FACTOR
         global CENTERING_FACTOR
         global MATCHING_FACTOR
-        AVOID_FACTOR = self.avoid_slider.value() / 10.0
-        MATCHING_FACTOR = self.matching_slider.value() / 100.0
-        CENTERING_FACTOR = self.centering_slider.value() / 10000.0
+        AVOID_FACTOR = self.avoid_slider.value() / 100.0
+        MATCHING_FACTOR = self.matching_slider.value() / 1000.0
+        CENTERING_FACTOR = self.centering_slider.value() / 100000.0
+        print(f"Avoiding: {AVOID_FACTOR}, Matching: {MATCHING_FACTOR}, Centering: {CENTERING_FACTOR}")
 
-    
     def speed_slider_value_changed(self):
         global MAX_SPEED
         global MIN_SPEED

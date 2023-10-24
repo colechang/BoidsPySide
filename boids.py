@@ -3,12 +3,11 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
-import concurrent.futures
-import multiprocessing
+import time
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 600
+NUM_BOIDS = 800
 BOID_SIZE = 2
 BOID_COLOR = QColor(255, 255, 255)
 
@@ -214,7 +213,7 @@ class BoidsWidget(QWidget):
             self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(16)
+        self.timer.start(1)
 
     def paintEvent(self,event):
         painter = QPainter(self)
@@ -225,6 +224,8 @@ class BoidsWidget(QWidget):
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
     
     def update_boids(self):
+        start_time = time.time()
+        
         self.quadtree.clear()
         for boid in self.boids:
             search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
@@ -258,6 +259,8 @@ class BoidsWidget(QWidget):
             boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
             boid.update()
         self.update()
+        time_now = time.time()
+        print("FPS: ", 1.0 / (time_now - start_time))
 
     
 

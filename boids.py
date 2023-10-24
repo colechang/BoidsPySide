@@ -3,6 +3,8 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
+import concurrent.futures
+import multiprocessing
 import math
 
 # Define the parameters for the boids simulation
@@ -149,7 +151,7 @@ class Boid:
         self.x = (1.0 - alpha) * self.x + alpha * target_x
         self.y = (1.0 - alpha) * self.y + alpha * target_y
 
-
+#multiprocessing since it doesnt depend on other boids
     def update(self):
         if self.x < 150:
             self.dx += TURN_FACTOR
@@ -165,7 +167,7 @@ class Boid:
         elif self.x > window_width:
             self.x = 0
         if self.y < 0:
-            self.y = 0
+            self.y = window_height
         elif self.y > window_height:
             self.y = 0
 
@@ -212,7 +214,7 @@ class BoidsWidget(QWidget):
             self.quadtree.insert(boid)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_boids)
-        self.timer.start(32)
+        self.timer.start(16)
 
     def paintEvent(self,event):
         painter = QPainter(self)
@@ -254,8 +256,10 @@ class BoidsWidget(QWidget):
             new_x = boid.x + boid.dx
             new_y = boid.y + boid.dy
             boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
-            boid.update()            
+            boid.update()
         self.update()
+
+    
 
 class BoidsWindow(QMainWindow):
     def __init__(self):
@@ -303,6 +307,7 @@ class BoidsWindow(QMainWindow):
         # Add the layouts to the central widget
         layout.addWidget(boids_container)
         central_widget.setLayout(layout)
+
 
     def create_sliderMaxSpeed(self,label_text,initial_value):
         slider = QSlider(Qt.Horizontal)

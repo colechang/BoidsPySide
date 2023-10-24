@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
 import concurrent.futures
-import multiprocessing
+import time
 import math
 
 # Define the parameters for the boids simulation
@@ -29,8 +29,6 @@ PROTECTED_RANGE = 8.0
 # Screen dimensions
 SCREEN_WIDTH = 0
 SCREEN_HEIGHT = 0
-
-processes = []
 
 class Boundary:
     def __init__(self, x, y, width, height):
@@ -225,6 +223,7 @@ class BoidsWidget(QWidget):
             painter.drawEllipse(boid.x, boid.y, BOID_SIZE, BOID_SIZE)
     
     def update_boids(self):
+        start_time = time.time()
         self.quadtree.clear()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = []
@@ -235,14 +234,14 @@ class BoidsWidget(QWidget):
                 futures.append(executor.submit(self.update_boid, boid, neighboring_boids))
 
             for future in concurrent.futures.as_completed(futures):
-                print(future.result)
                 future.result()  # Ensure all updates are complete
 
         self.update()
+        time_now = time.time()
+        print("FPS: ", 1.0 / (time_now - start_time))
 
     def update_boid(self, boid, neighboring_boids):
         xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
-
         for otherBoid in neighboring_boids:
             if boid != otherBoid:
                 dx = boid.x - otherBoid.x
@@ -285,6 +284,7 @@ class BoidsWidget(QWidget):
 
         # Update the boid's position based on its velocity
         boid.update()
+        
 
 class BoidsWindow(QMainWindow):
     def __init__(self):

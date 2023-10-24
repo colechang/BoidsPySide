@@ -3,11 +3,12 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
-import threading
+import concurrent.futures
+import multiprocessing
 import math
 
 # Define the parameters for the boids simulation
-NUM_BOIDS = 600
+NUM_BOIDS = 800
 BOID_SIZE = 2
 BOID_COLOR = QColor(255, 255, 255)
 
@@ -29,6 +30,7 @@ PROTECTED_RANGE = 8.0
 SCREEN_WIDTH = 0
 SCREEN_HEIGHT = 0
 
+processes = []
 
 class Boundary:
     def __init__(self, x, y, width, height):
@@ -170,7 +172,6 @@ class Boid:
         elif self.y > window_height:
             self.y = 0
 
-
         """    
         if (self.biasGroup =="LEFT"): 
             if (self.dx > 0):
@@ -225,38 +226,65 @@ class BoidsWidget(QWidget):
     
     def update_boids(self):
         self.quadtree.clear()
-        for boid in self.boids:
-            search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
-            neighboring_boids = self.quadtree.query(search_boundary)
-            xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
-            for otherBoid in neighboring_boids:
-                if(boid!=otherBoid):
-                    dx = boid.x - otherBoid.x
-                    dy = boid.y - otherBoid.y
-                    #alter viewing distance and protected range values and checks if withing boundary instead
-                    if(abs(dx)<VIEWING_DISTANCE and abs(dy)<VIEWING_DISTANCE):
-                        squaredDistance = (dx*dx) + (dy*dy)
-                        if(squaredDistance < (PROTECTED_RANGE*PROTECTED_RANGE)):
-                            close_dx += boid.x - otherBoid.x
-                            close_dy += boid.y - otherBoid.y
-                        elif (squaredDistance < (VIEWING_DISTANCE*VIEWING_DISTANCE)):
-                            xvel_avg += otherBoid.dx
-                            yvel_avg += otherBoid.dy
-                            xpos_avg += otherBoid.x
-                            ypos_avg += otherBoid.y
-            separation = boid.separation(close_dx,close_dy)
-            boid.dx += separation[0]
-            boid.dy += separation[1]
-            if(len(neighboring_boids)>0):
-                alignment = boid.alignment(xvel_avg,yvel_avg,len(neighboring_boids))
-                cohesion = boid.cohesion(xpos_avg,ypos_avg,len(neighboring_boids))
-                boid.dx += alignment[0] + cohesion[0] 
-                boid.dy += alignment[1] + cohesion[1]
-            new_x = boid.x + boid.dx
-            new_y = boid.y + boid.dy
-            boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
-            boid.update()            
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = []
+
+            for boid in self.boids:
+                search_boundary = Boundary(boid.x, boid.y, VIEWING_DISTANCE*2, VIEWING_DISTANCE*2)
+                neighboring_boids = self.quadtree.query(search_boundary)
+                futures.append(executor.submit(self.update_boid, boid, neighboring_boids))
+
+            for future in concurrent.futures.as_completed(futures):
+                print(future.result)
+                future.result()  # Ensure all updates are complete
+
         self.update()
+
+    def update_boid(self, boid, neighboring_boids):
+        xvel_avg = yvel_avg = xpos_avg = ypos_avg = close_dx = close_dy = 0.0
+
+        for otherBoid in neighboring_boids:
+            if boid != otherBoid:
+                dx = boid.x - otherBoid.x
+                dy = boid.y - otherBoid.y
+
+                # Check if the other boid is within the protected range
+                squared_distance = (dx * dx) + (dy * dy)
+                if squared_distance < (PROTECTED_RANGE * PROTECTED_RANGE):
+                    close_dx += boid.x - otherBoid.x
+                    close_dy += boid.y - otherBoid.y
+
+                # Check if the other boid is within the viewing distance
+                if squared_distance < (VIEWING_DISTANCE * VIEWING_DISTANCE):
+                    xvel_avg += otherBoid.dx
+                    yvel_avg += otherBoid.dy
+                    xpos_avg += otherBoid.x
+                    ypos_avg += otherBoid.y
+
+        # Calculate separation based on nearby boids
+        separation = boid.separation(close_dx, close_dy)
+        boid.dx += separation[0]
+        boid.dy += separation[1]
+
+        if len(neighboring_boids) > 0:
+            # Calculate alignment based on nearby boids
+            alignment = boid.alignment(xvel_avg, yvel_avg, len(neighboring_boids))
+            # Calculate cohesion based on nearby boids
+            cohesion = boid.cohesion(xpos_avg, ypos_avg, len(neighboring_boids))
+
+            # Update the boid's velocity based on alignment and cohesion
+            boid.dx += alignment[0] + cohesion[0]
+            boid.dy += alignment[1] + cohesion[1]
+
+        # Calculate the new position for the boid
+        new_x = boid.x + boid.dx
+        new_y = boid.y + boid.dy
+
+        # Use linear interpolation to smooth the movement
+        boid.lerp(new_x, new_y, INTERPOLATION_ALPHA)
+
+        # Update the boid's position based on its velocity
+        boid.update()
 
 class BoidsWindow(QMainWindow):
     def __init__(self):

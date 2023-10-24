@@ -3,7 +3,11 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
+<<<<<<< HEAD
 import time
+=======
+import threading
+>>>>>>> 2760579 (boundary error)
 import math
 
 # Define the parameters for the boids simulation

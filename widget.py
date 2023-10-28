@@ -4,7 +4,8 @@ from quadtree import Boundary
 from boid import Boid
 from boid import random
 import time
-import concurrent.futures
+import os
+import psutil
 from constants import NUM_BOIDS, BOID_SIZE, PROTECTED_RANGE,VIEWING_DISTANCE,INTERPOLATION_ALPHA
 from boid import *
 from PySide6.QtGui import QPainter, QBrush, QColor
@@ -69,6 +70,11 @@ class BoidsWidget(QWidget):
             new_y = boid.y + boid.dy
             boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
             boid.update()
+            load1, load5, load15 = psutil.getloadavg()
+        
+            cpu_usage = (load15/os.cpu_count()) * 100
+            
+            print("The CPU usage is : ", cpu_usage)
         self.update()
         time_now = time.time()
         print("FPS: ", 1.0 / (time_now - start_time))

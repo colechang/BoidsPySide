@@ -4,8 +4,6 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QSlider, QLabel, QVBoxLayout
 import time
-import threading
-import concurrent.futures
 import time
 import math
 
@@ -261,9 +259,6 @@ class BoidsWidget(QWidget):
             boid.lerp(new_x, new_y, INTERPOLATION_ALPHA) 
             boid.update()
         self.update()
-        time_now = time.time()
-        print("FPS: ", 1.0 / (time_now - start_time))
-
     
 
 class BoidsWindow(QMainWindow):

@@ -19,5 +19,4 @@ if __name__ == "__main__":
 
     window = BoidsWindow()
     window.show()
-
     sys.exit(app.exec_())

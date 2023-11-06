@@ -6,15 +6,15 @@
 
 The Boids Simulation is a Python application that demonstrates the behavior of a flock of birds (boids) in a window. This project uses PySide6 to create a graphical user interface (GUI) for the simulation. 
 
-Origin of the Concept: The term "boids" was coined by computer scientist Craig Reynolds in 1986, as part of his research into simulating the flocking behavior of birds. Reynolds developed a set of simple rules that govern the behavior of individual agents (boids) within a group. These rules include alignment (matching the direction of neighbors), cohesion (moving toward the center of mass of neighbors), and separation (avoiding collisions with neighbors).
+Boids is a concept in computational modeling and artificial intelligence that simulates the emergent behavior of a group of autonomous agents, such as birds, fish, or other entities, by employing simple rules of interaction. This approach was originally developed by Craig Reynolds in 1986 to capture the captivating complexity of collective motion seen in flocks of birds or schools of fish.
 
-Biological Inspiration: The foundation of boid research lies in its biological inspiration, primarily the flocking behavior of birds, but also the schooling of fish and the swarming of insects. Scientists have observed that these animals, despite their limited cognitive abilities, can exhibit highly coordinated group behaviors. Boid models aim to capture the underlying principles responsible for such emergent phenomena.
+Boids models the behavior of individual agents based on three fundamental principles: separation, alignment, and cohesion. Separation ensures that agents avoid collisions by maintaining a minimum distance from one another, alignment fosters a sense of alignment with the velocities of nearby agents, and cohesion encourages agents to stay close to their neighbors, creating group cohesiveness.
 
-Complex Systems: Boid simulations are part of a broader field known as complex systems. They exemplify how simple, local interactions among individuals can lead to complex global behaviors. This research offers insights into self-organization, criticality, and emergent properties in various systems, including ecological, social, and economic systems.
+This elegant and computationally efficient approach enables the simulation of mesmerizing patterns of collective behavior, highlighting how seemingly complex and coordinated group dynamics can emerge from the interaction of relatively simple, localized rules. Boids has found application in a wide range of fields, from computer graphics and video game design to robotics and traffic flow optimization, and continues to serve as a valuable model for understanding and simulating the self-organization of multi-agent systems.
 ## Features
 
 - Simulates the movement of a flock of boids.
-- Customizable parameters for the simulation, such as the number of boids, their speed, and appearance.
+- Customizable parameters for the simulation, such as the behaviour and speed
 - Real-time rendering of boids using PySide6's QPainter.
 
 ## Requirements
